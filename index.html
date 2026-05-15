@@ -42,6 +42,11 @@ button,input,textarea,select{font-family:'Nunito','Segoe UI',sans-serif}
 ::-webkit-scrollbar-thumb{background:#C4B5F4;border-radius:4px}
 .hbtn:active{transform:scale(0.96)}
 input[type="date"]{appearance:none;-webkit-appearance:none}
+body.dark{background:#1A1625}
+body.dark #root{background:#1A1625}
+@keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+.confetti-piece{position:fixed;width:10px;height:10px;top:-20px;z-index:9999;animation:confetti-fall 2.5s ease-in forwards;border-radius:2px;}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(103,80,164,0.4)}50%{box-shadow:0 0 0 12px rgba(103,80,164,0)}}
 </style>
 </head>
 <body>
@@ -216,6 +221,50 @@ const IC={
   chevR:'M9 18l6-6-6-6',
   search:['M11 19a8 8 0 100-16 8 8 0 000 16z','M21 21l-4.35-4.35'],
   filter:['M22 3H2l8 9.46V19l4 2v-8.54L22 3'],
+};
+
+/* ── GATE QUOTES ────────────────────────────────────*/
+const GATE_QUOTES=[
+  {q:"Success is the sum of small efforts repeated day in and day out.",a:"Robert Collier"},
+  {q:"The secret of getting ahead is getting started.",a:"Mark Twain"},
+  {q:"Don't watch the clock; do what it does. Keep going.",a:"Sam Levenson"},
+  {q:"Hard work beats talent when talent doesn't work hard.",a:"Tim Notke"},
+  {q:"Your future is created by what you do today, not tomorrow.",a:"Robert Kiyosaki"},
+  {q:"Focus on being productive instead of busy.",a:"Tim Ferriss"},
+  {q:"The expert in anything was once a beginner.",a:"Helen Hayes"},
+  {q:"Dream big. Start small. Act now.",a:"Robin Sharma"},
+  {q:"Consistency is the key to achieving and maintaining momentum.",a:"Darren Hardy"},
+  {q:"One day or day one. You decide.",a:"Paulo Coelho"},
+  {q:"The pain of discipline is far less than the pain of regret.",a:"Sarah Bombell"},
+  {q:"You don't have to be great to start, but you have to start to be great.",a:"Zig Ziglar"},
+  {q:"GATE is not just an exam — it's a test of your consistency.",a:"HABITRA"},
+  {q:"Revise today what you studied yesterday. That's how toppers think.",a:"HABITRA"},
+  {q:"Every topic you master today is one less worry on exam day.",a:"HABITRA"},
+  {q:"Small daily improvements lead to stunning long-term results.",a:"Robin Sharma"},
+];
+const todayQuote=()=>{
+  const d=new Date();
+  const idx=(d.getFullYear()*10000+d.getMonth()*100+d.getDate())%GATE_QUOTES.length;
+  return GATE_QUOTES[idx];
+};
+
+/* ── CONFETTI ────────────────────────────────────────*/
+const fireConfetti=()=>{
+  const colors=['#7C4DFF','#FFB74D','#43A047','#0097A7','#C2185B','#F9A825','#FF5722'];
+  const container=document.body;
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.width=(Math.random()*8+6)+'px';
+    el.style.height=(Math.random()*8+6)+'px';
+    el.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    el.style.animationDelay=(Math.random()*1.5)+'s';
+    el.style.animationDuration=(Math.random()*1.5+2)+'s';
+    container.appendChild(el);
+    setTimeout(()=>el.remove(),4000);
+  }
 };
 
 /* ── SHARED COMPONENTS ───────────────────────────────*/
@@ -609,7 +658,7 @@ function StatsView({daily,logs,revEntries}){
   return(
     <div>
       <div style={{display:'flex',background:SV,borderRadius:14,padding:3,marginBottom:14,gap:2}}>
-        {[['habits','Habit Stats'],['revision','Revision Stats']].map(([id,lbl])=>(
+        {[['habits','Habit Stats'],['revision','Revision Stats'],['report','Weekly Report']].map(([id,lbl])=>(
           <button key={id} onClick={()=>setStab(id)}
             style={{flex:1,padding:'9px',borderRadius:12,border:'none',
               background:stab===id?SUR:'transparent',color:stab===id?P:TS,
@@ -710,6 +759,52 @@ function StatsView({daily,logs,revEntries}){
           })}
         </div>
       )}
+      {stab==='report'&&(()=>{
+        const weeks=[];
+        for(let w=0;w<8;w++){
+          const d=new Date();d.setDate(d.getDate()-w*7);
+          const wk=wkKey(d);
+          let totalPct=0,days=0;
+          for(let dd=0;dd<7;dd++){
+            const day=new Date(d);day.setDate(day.getDate()-dd);
+            const k=dk(day.getFullYear(),day.getMonth(),day.getDate());
+            const done=daily.filter((_,i)=>(logs[k]||{})[i]).length;
+            const pct=daily.length?Math.round(done/daily.length*100):0;
+            if(Object.keys(logs[k]||{}).length>0||w===0){totalPct+=pct;days++;}
+          }
+          const avg=days>0?Math.round(totalPct/Math.max(days,1)):0;
+          const label=w===0?'This Week':w===1?'Last Week':`${w} weeks ago`;
+          weeks.push({label,avg,wk});
+        }
+        return(
+          <div>
+            <SH ch="Weekly Performance — Last 8 Weeks"/>
+            {weeks.map(({label,avg,wk},i)=>(
+              <div key={wk} style={{background:'#FFFFFF',border:'1px solid #E4DAFB',
+                borderRadius:18,padding:'12px 16px',marginBottom:9,
+                boxShadow:'0 1px 4px rgba(103,80,164,0.07)'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:'#1C1B1F'}}>{label}</div>
+                    <div style={{fontSize:10,color:'#79747E'}}>{wk}</div>
+                  </div>
+                  <div style={{fontSize:24,fontWeight:900,
+                    color:avg>=80?'#2E7D32':avg>=50?'#F57C00':'#C62828'}}>{avg}%</div>
+                </div>
+                <div style={{height:8,background:'#E4DAFB',borderRadius:4,overflow:'hidden'}}>
+                  <div style={{height:'100%',borderRadius:4,transition:'width 0.5s',
+                    background:avg>=80?'linear-gradient(90deg,#43A047,#66BB6A)':avg>=50?'linear-gradient(90deg,#F57C00,#FFB74D)':'linear-gradient(90deg,#E53935,#EF9A9A)',
+                    width:`${avg}%`}}/>
+                </div>
+                <div style={{fontSize:10,color:avg>=80?'#2E7D32':avg>=50?'#F57C00':'#C62828',
+                  fontWeight:700,marginTop:5}}>
+                  {avg>=80?'🏆 Excellent week!':avg>=50?'💪 Good effort, push harder':'⚠️ Needs improvement'}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -717,11 +812,108 @@ function StatsView({daily,logs,revEntries}){
 /* ═══════════════════════════════════════════════════
    TODAY VIEW (Habits + Due Revisions combined)
    ═══════════════════════════════════════════════════ */
-function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,todayDone,todayPct,bestStr,avg30}){
+function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,todayDone,todayPct,bestStr,avg30,
+  gateCountdown,gateDate,setGateDate,todayHours,weekHours,totalHours,
+  showHoursInput,setShowHoursInput,hoursInput,setHoursInput,logHours,darkMode}){
   const dueEntries=useMemo(()=>getTodayDueEntries(revEntries),[revEntries]);
+  const quote=useMemo(()=>todayQuote(),[]);
+  const [editGate,setEditGate]=useState(false);
+  const [gateInput,setGateInput]=useState(gateDate);
 
   return(
     <div>
+      {/* GATE COUNTDOWN */}
+      <div style={{background:gateCountdown<=30?'linear-gradient(135deg,#FF5722,#FF8A65)':gateCountdown<=90?'linear-gradient(135deg,#F57C00,#FFB74D)':'linear-gradient(135deg,#1565C0,#42A5F5)',
+        borderRadius:22,padding:'14px 18px',marginBottom:10,
+        display:'flex',alignItems:'center',justifyContent:'space-between',
+        boxShadow:gateCountdown<=30?'0 4px 18px rgba(255,87,34,0.35)':'0 4px 18px rgba(21,101,192,0.28)'}}>
+        <div>
+          <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.8)',letterSpacing:1.5,textTransform:'uppercase'}}>GATE Countdown</div>
+          <div style={{fontSize:36,fontWeight:900,color:'#FFF',lineHeight:1,marginTop:2}}>{gateCountdown}</div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.85)',fontWeight:600}}>days remaining</div>
+        </div>
+        <div style={{textAlign:'right'}}>
+          {editGate?(
+            <div style={{display:'flex',flexDirection:'column',gap:5,alignItems:'flex-end'}}>
+              <input type="date" value={gateInput} onChange={e=>setGateInput(e.target.value)}
+                style={{border:'none',borderRadius:8,padding:'5px 8px',fontSize:12,fontWeight:700,
+                  background:'rgba(255,255,255,0.25)',color:'#FFF',outline:'none',fontFamily:'Nunito,sans-serif'}}/>
+              <button onClick={()=>{setGateDate(gateInput);setEditGate(false);}}
+                style={{background:'rgba(255,255,255,0.3)',border:'none',borderRadius:8,
+                  padding:'4px 12px',color:'#FFF',fontWeight:800,fontSize:12,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+                Save
+              </button>
+            </div>
+          ):(
+            <div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.75)',marginBottom:4}}>{gateDate}</div>
+              <button onClick={()=>{setGateInput(gateDate);setEditGate(true);}}
+                style={{background:'rgba(255,255,255,0.2)',border:'1px solid rgba(255,255,255,0.4)',
+                  borderRadius:10,padding:'4px 12px',color:'#FFF',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+                ✏️ Set Date
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* QUOTE OF THE DAY */}
+      <div style={{background:darkMode?'#2D2640':'linear-gradient(135deg,#EDE7FF,#F3EEFF)',
+        borderRadius:18,padding:'13px 16px',marginBottom:10,
+        border:'1px solid #D4C8FF'}}>
+        <div style={{fontSize:10,fontWeight:700,color:P,letterSpacing:1.5,marginBottom:5}}>✨ TODAY'S MOTIVATION</div>
+        <div style={{fontSize:13,fontWeight:600,color:darkMode?'#E8E0FF':'#3D2B7A',lineHeight:1.5,fontStyle:'italic'}}>"{quote.q}"</div>
+        <div style={{fontSize:10,color:'#9E8ACA',fontWeight:700,marginTop:5}}>— {quote.a}</div>
+      </div>
+
+      {/* STUDY HOURS TRACKER */}
+      <div style={{background:darkMode?'#1E2D1E':'linear-gradient(135deg,#E8F5E9,#F1FAF1)',
+        borderRadius:18,padding:'13px 16px',marginBottom:12,
+        border:'1px solid #A5D6A7',display:'flex',alignItems:'center',gap:12}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:10,fontWeight:700,color:'#2E7D32',letterSpacing:1.2}}>📚 STUDY TIME</div>
+          <div style={{display:'flex',gap:10,marginTop:4,flexWrap:'wrap'}}>
+            <div>
+              <span style={{fontSize:22,fontWeight:900,color:'#2E7D32'}}>{todayHours}h</span>
+              <span style={{fontSize:10,color:'#388E3C',fontWeight:600,marginLeft:3}}>today</span>
+            </div>
+            <div>
+              <span style={{fontSize:16,fontWeight:800,color:'#43A047'}}>{weekHours}h</span>
+              <span style={{fontSize:10,color:'#388E3C',fontWeight:600,marginLeft:3}}>this week</span>
+            </div>
+            <div>
+              <span style={{fontSize:14,fontWeight:700,color:'#66BB6A'}}>{Math.round(totalHours)}h</span>
+              <span style={{fontSize:10,color:'#388E3C',fontWeight:600,marginLeft:3}}>total</span>
+            </div>
+          </div>
+        </div>
+        <button onClick={()=>setShowHoursInput(v=>!v)}
+          style={{background:'linear-gradient(135deg,#43A047,#66BB6A)',border:'none',
+            borderRadius:14,padding:'9px 14px',cursor:'pointer',color:'#FFF',
+            fontSize:12,fontWeight:800,flexShrink:0,fontFamily:'Nunito,sans-serif'}}>
+          {showHoursInput?'Cancel':'+ Log'}
+        </button>
+      </div>
+      {showHoursInput&&(
+        <div style={{background:'#F1FAF1',borderRadius:14,padding:'12px 14px',marginBottom:12,
+          border:'1px solid #A5D6A7',display:'flex',gap:9,alignItems:'center'}}>
+          <input type="number" min="0" max="24" step="0.5" value={hoursInput}
+            onChange={e=>setHoursInput(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&logHours()}
+            autoFocus
+            placeholder="e.g. 4.5"
+            style={{flex:1,border:'2px solid #A5D6A7',borderRadius:10,padding:'9px 12px',
+              fontSize:15,fontWeight:700,color:'#1B5E20',background:'#FFF',outline:'none',
+              fontFamily:'Nunito,sans-serif'}}/>
+          <span style={{fontSize:13,fontWeight:600,color:'#388E3C'}}>hours</span>
+          <button onClick={logHours}
+            style={{background:'#43A047',border:'none',borderRadius:10,padding:'9px 16px',
+              cursor:'pointer',color:'#FFF',fontWeight:800,fontSize:13,fontFamily:'Nunito,sans-serif'}}>
+            Save
+          </button>
+        </div>
+      )}
+
       {/* Hero */}
       <div style={{background:'linear-gradient(135deg,#6750A4 0%,#9C68FF 100%)',
         borderRadius:26,padding:'18px 18px 18px 20px',marginBottom:14,
@@ -735,7 +927,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,toda
           </div>
         </div>
         <div style={{color:'#FFF',flex:1}}>
-          <div style={{fontSize:26,fontWeight:900,lineHeight:1.1}}>{todayDone} habits</div>
+          <div style={{fontSize:26,fontWeight:900,lineHeight:1.1}}>{todayPct===100?'🎉 Perfect day!':todayDone+' habits'}</div>
           <div style={{fontSize:12,opacity:0.75,marginTop:2}}>
             {daily.length-todayDone} left · {dueEntries.length} revisions due
           </div>
@@ -867,9 +1059,46 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
   logs,revEntries,wlogs,setWlogs,addType,setAddType,newName,setNewName,doAdd,
   editId,setEditId,editTxt,setEditTxt,saveEdit,delConf,setDelConf,doDelete,
   moveH,pasteOpen,setPasteOpen,pasteTxt,setPasteTxt,doPasteRestore,
-  doExport,doCopy,doFileRestore,fileRef}){
+  doExport,doCopy,doFileRestore,fileRef,darkMode,setDarkMode,gateDate,setGateDate}){
+  const [gateInput,setGateInput]=useState(gateDate);
   return(
     <div>
+      {/* Appearance & GATE Date */}
+      <SH ch="Appearance & GATE Settings"/>
+      <div style={{background:'#FFFFFF',borderRadius:20,border:'1px solid #E4DAFB',
+        padding:16,marginBottom:14,boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+          paddingBottom:12,borderBottom:'1px solid #E4DAFB',marginBottom:12}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F'}}>🌙 Dark Mode</div>
+            <div style={{fontSize:11,color:'#79747E',marginTop:2}}>Easy on eyes during night study</div>
+          </div>
+          <button onClick={()=>setDarkMode(v=>!v)}
+            style={{width:48,height:26,borderRadius:13,border:'none',cursor:'pointer',
+              background:darkMode?'#6750A4':'#E4DAFB',position:'relative',transition:'background 0.2s',flexShrink:0}}>
+            <div style={{width:20,height:20,borderRadius:'50%',background:'#FFF',
+              position:'absolute',top:3,transition:'left 0.2s',
+              left:darkMode?'25px':'3px',boxShadow:'0 1px 4px rgba(0,0,0,0.2)'}}/>
+          </button>
+        </div>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>🎯 GATE Exam Date</div>
+          <div style={{fontSize:11,color:'#79747E',marginBottom:8}}>Used for the countdown on the Today screen</div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <input type="date" value={gateInput} onChange={e=>setGateInput(e.target.value)}
+              style={{flex:1,border:'2px solid #E4DAFB',borderRadius:12,padding:'9px 12px',
+                fontSize:13,fontWeight:700,color:'#1C1B1F',background:'#F0EAFE',outline:'none',
+                fontFamily:'Nunito,sans-serif'}}/>
+            <button onClick={()=>setGateDate(gateInput)}
+              style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',border:'none',
+                borderRadius:12,padding:'10px 16px',color:'#FFF',fontWeight:800,
+                fontSize:13,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+              Set
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Daily habits */}
       <SH ch="Daily Habits — Edit / Reorder / Delete"/>
       <div style={{background:SUR,borderRadius:20,border:`1px solid ${OL}`,
@@ -1176,6 +1405,12 @@ function App(){
   const [pasteTxt,setPasteTxt]=useState('');
   const [toast,setToast]=useState(null);
   const [syncStatus,setSyncStatus]=useState('loading');
+  const [darkMode,setDarkMode]=useState(()=>{try{return localStorage.getItem('habitra_dark')==='1';}catch(e){return false;}});
+  const [gateDate,setGateDate]=useState(()=>{try{return localStorage.getItem('habitra_gate_date')||'2027-02-01';}catch(e){return '2027-02-01';}});
+  const [studyHours,setStudyHours]=useState(()=>{try{const r=localStorage.getItem('habitra_study_hours');return r?JSON.parse(r):{}}catch(e){return {};}});
+  const [showHoursInput,setShowHoursInput]=useState(false);
+  const [hoursInput,setHoursInput]=useState('');
+  const prevTodayPctRef=useRef(0);
   const fileRef=useRef(null);
 
   const T=now2();
@@ -1214,6 +1449,50 @@ function App(){
       },1500);
     }
   },[daily,weekly,logs,wlogs,revEntries]);
+
+  /* Dark mode body class */
+  useEffect(()=>{
+    document.body.classList.toggle('dark',darkMode);
+    try{localStorage.setItem('habitra_dark',darkMode?'1':'0');}catch(e){}
+  },[darkMode]);
+
+  /* Confetti when 100% habits done */
+  useEffect(()=>{
+    const pct=daily.length?Math.round(daily.filter((_,i)=>(logs[TK]||{})[i]).length/daily.length*100):0;
+    if(pct===100&&prevTodayPctRef.current<100&&daily.length>0)fireConfetti();
+    prevTodayPctRef.current=pct;
+  },[logs,TK]);
+
+  /* Save study hours to localStorage */
+  useEffect(()=>{try{localStorage.setItem('habitra_study_hours',JSON.stringify(studyHours));}catch(e){}},
+    [studyHours]);
+
+  /* Save gate date */
+  useEffect(()=>{try{localStorage.setItem('habitra_gate_date',gateDate);}catch(e){}},
+    [gateDate]);
+
+  /* Study hours helpers */
+  const todayHours=studyHours[TK]||0;
+  const logHours=()=>{
+    const h=parseFloat(hoursInput);
+    if(isNaN(h)||h<0||h>24){toast$('Enter valid hours (0-24)','err');return;}
+    setStudyHours(p=>({...p,[TK]:h}));
+    setShowHoursInput(false);setHoursInput('');
+    toast$(`Logged ${h}h study time ✅`);
+  };
+  const weekHours=useMemo(()=>{
+    let t=0;
+    for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);
+      const k=dk(d.getFullYear(),d.getMonth(),d.getDate());t+=studyHours[k]||0;}
+    return Math.round(t*10)/10;
+  },[studyHours,TK]);
+  const totalHours=useMemo(()=>Object.values(studyHours).reduce((a,b)=>a+b,0),[studyHours]);
+
+  /* GATE countdown */
+  const gateCountdown=useMemo(()=>{
+    const diff=Math.ceil((new Date(gateDate)-new Date())/(1000*60*60*24));
+    return diff>0?diff:0;
+  },[gateDate]);
 
   const toast$=(msg,type='ok')=>{setToast({msg,type});setTimeout(()=>setToast(null),2800);};
 
@@ -1393,11 +1672,15 @@ function App(){
   }
 
   return(
-    <div style={{minHeight:'100vh',background:BG,paddingBottom:80}}>
+    <div style={{minHeight:'100vh',background:darkMode?'#1A1625':BG,paddingBottom:80}}>
+      {darkMode&&<style>{`
+        body{background:#1A1625!important}
+        .dark-card{background:#2D2640!important;border-color:#3D3257!important}
+      `}</style>}
 
       {/* HEADER */}
-      <div style={{background:SUR,padding:'12px 16px 10px',
-        borderBottom:`1px solid ${OL}`,position:'sticky',top:0,zIndex:30,
+      <div style={{background:darkMode?'#2D2640':SUR,padding:'12px 16px 10px',
+        borderBottom:`1px solid ${darkMode?'#3D3257':OL}`,position:'sticky',top:0,zIndex:30,
         display:'flex',alignItems:'center',justifyContent:'space-between',
         boxShadow:'0 2px 10px rgba(103,80,164,0.09)'}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -1458,7 +1741,12 @@ function App(){
           <TodayView daily={daily} logs={logs} TK={TK} toggleToday={toggleToday}
             revEntries={revEntries} onRevToggle={toggleRevision}
             chart7={chart7} todayDone={todayDone} todayPct={todayPct}
-            bestStr={bestStr} avg30={avg30}/>
+            bestStr={bestStr} avg30={avg30}
+            gateCountdown={gateCountdown} gateDate={gateDate} setGateDate={setGateDate}
+            todayHours={todayHours} weekHours={weekHours} totalHours={totalHours}
+            showHoursInput={showHoursInput} setShowHoursInput={setShowHoursInput}
+            hoursInput={hoursInput} setHoursInput={setHoursInput} logHours={logHours}
+            darkMode={darkMode}/>
         )}
         {view==='monthly'&&(
           <MonthlyView daily={daily} logs={logs} vy={vy} vm={vm} T={T} toggleDay={toggleDay}/>
@@ -1485,7 +1773,9 @@ function App(){
             delConf={delConf} setDelConf={setDelConf} doDelete={doDelete}
             moveH={moveH} pasteOpen={pasteOpen} setPasteOpen={setPasteOpen}
             pasteTxt={pasteTxt} setPasteTxt={setPasteTxt} doPasteRestore={doPasteRestore}
-            doExport={doExport} doCopy={doCopy} doFileRestore={doFileRestore} fileRef={fileRef}/>
+            doExport={doExport} doCopy={doCopy} doFileRestore={doFileRestore} fileRef={fileRef}
+            darkMode={darkMode} setDarkMode={setDarkMode}
+            gateDate={gateDate} setGateDate={setGateDate}/>
         )}
       </div>
 
@@ -1515,8 +1805,8 @@ function App(){
 
       {/* BOTTOM NAV */}
       <nav style={{position:'fixed',bottom:0,left:0,right:0,
-        background:'rgba(255,255,255,0.97)',backdropFilter:'blur(12px)',
-        borderTop:`1px solid ${OL}`,display:'flex',zIndex:25,
+        background:darkMode?'rgba(45,38,64,0.97)':'rgba(255,255,255,0.97)',backdropFilter:'blur(12px)',
+        borderTop:`1px solid ${darkMode?'#3D3257':OL}`,display:'flex',zIndex:25,
         boxShadow:'0 -2px 14px rgba(103,80,164,0.09)',
         paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
         {NAV.map(([id,icon,lbl])=>(
