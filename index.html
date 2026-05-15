@@ -15,7 +15,7 @@
 // Inject PWA manifest dynamically
 (function(){
   const manifest={name:'HABITRA — Habit & Revision Tracker',short_name:'HABITRA',
-    description:'GATE prep habit & spaced revision tracker',
+    description:'Chandan Kumar GATE & ESE prep tracker for a 2027 government job goal',
     start_url:window.location.href,display:'standalone',
     orientation:'portrait',theme_color:'#6750A4',background_color:'#F6F0FF',
     icons:[{src:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjNjc1MEE0Ii8+PHRleHQgeT0iNzUiIHg9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjcwIj7wn5a8PC90ZXh0Pjwvc3ZnPg==',
@@ -721,6 +721,10 @@ const IC={
 
 /* ── GATE QUOTES ────────────────────────────────────*/
 const GATE_QUOTES=[
+  {q:"Chandan Kumar, every honest study day is a step toward the government job you want for your parents.",a:"HABITRA"},
+  {q:"GATE and ESE reward the student who returns tomorrow and does the work again.",a:"HABITRA"},
+  {q:"A 2027 government job is built from today's revision, today's PYQ, and today's discipline.",a:"HABITRA"},
+  {q:"Study like your parents' pride is waiting at the finish line.",a:"HABITRA"},
   {q:"Success is the sum of small efforts repeated day in and day out.",a:"Robert Collier"},
   {q:"The secret of getting ahead is getting started.",a:"Mark Twain"},
   {q:"Don't watch the clock; do what it does. Keep going.",a:"Sam Levenson"},
@@ -1130,6 +1134,17 @@ function StatsView({daily,logs,revEntries}){
   const [stab,setStab]=useState('habits');
   const bestStr=useMemo(()=>Math.max(0,...daily.map((_,i)=>getStreak(logs,i))),[logs,daily]);
   const avg30=useMemo(()=>daily.length?Math.round(daily.reduce((a,_,i)=>a+getRate(logs,i,30),0)/daily.length):0,[logs,daily]);
+  const monthProgress=useMemo(()=>{
+    const T=now2();
+    const rel=T.d;
+    let done=0;
+    for(let d=1;d<=rel;d++){
+      const k=dk(T.y,T.m,d);
+      done+=daily.filter((_,i)=>(logs[k]||{})[i]).length;
+    }
+    const total=daily.length*rel;
+    return{pct:total?Math.round(done/total*100):0,done,total,month:MONTHS[T.m],year:T.y};
+  },[daily,logs]);
 
   /* revision stats per subject */
   const subjStats=useMemo(()=>{
@@ -1153,6 +1168,24 @@ function StatsView({daily,logs,revEntries}){
 
   return(
     <div>
+      <div style={{background:`linear-gradient(135deg,${P},${P2})`,
+        borderRadius:22,padding:'17px',color:'#FFF',boxShadow:`0 6px 20px ${P}33`,
+        marginBottom:14}}>
+        <div style={{fontSize:10,fontWeight:900,letterSpacing:1.2,opacity:0.75,textTransform:'uppercase'}}>
+          Chandan's Monthly Progress
+        </div>
+        <div style={{display:'flex',alignItems:'flex-end',gap:10,marginTop:4}}>
+          <div style={{fontSize:36,fontWeight:900,lineHeight:1}}>{monthProgress.pct}%</div>
+          <div style={{fontSize:12,fontWeight:800,opacity:0.82,marginBottom:5}}>
+            {monthProgress.done}/{monthProgress.total||0} checks in {monthProgress.month}
+          </div>
+        </div>
+        <div style={{height:8,background:'rgba(255,255,255,0.24)',borderRadius:5,overflow:'hidden',marginTop:12}}>
+          <div style={{height:'100%',width:`${monthProgress.pct}%`,
+            background:'linear-gradient(90deg,#FFFFFF,#B2EBF2)',borderRadius:5,transition:'width 0.5s'}}/>
+        </div>
+      </div>
+
       <div style={{display:'flex',background:SV,borderRadius:14,padding:3,marginBottom:14,gap:2}}>
         {[['habits','Habit Stats'],['revision','Revision Stats'],['report','Weekly Report']].map(([id,lbl])=>(
           <button key={id} onClick={()=>setStab(id)}
@@ -1383,12 +1416,12 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
             <span style={{fontSize:22,color:'#FFF',fontWeight:900,lineHeight:1}}>{gateCountdown}</span>
           </div>
           <div style={{flex:1}}>
-            <div style={{fontSize:10,fontWeight:900,color:gateColor,letterSpacing:1.2,textTransform:'uppercase'}}>GATE Countdown</div>
+            <div style={{fontSize:10,fontWeight:900,color:gateColor,letterSpacing:1.2,textTransform:'uppercase'}}>GATE + ESE Countdown</div>
             <div style={{fontSize:20,fontWeight:900,color:gateColor,lineHeight:1.08}}>
               {gateCountdown} days left
             </div>
             <div style={{fontSize:10,color:gateColor,fontWeight:800,marginTop:3,lineHeight:1.35}}>
-              {gateCountdown<=30?'Final stretch - every session counts':gateCountdown<=90?'Serious prep window - protect today':'Keep the chain strong'} | Exam: {gateDate}
+              {gateCountdown<=30?'Final stretch - every session counts':gateCountdown<=90?'Serious prep window - protect today':'2027 govt job mission for your parents'} | Target: {gateDate}
             </div>
           </div>
         </div>
@@ -1452,10 +1485,10 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
           </div>
           <div style={{color:'#FFF',flex:1}}>
             <div style={{fontSize:22,fontWeight:900,lineHeight:1.2}}>
-              {todayPct===100?'🎉 Perfect!':todayDone===0?'Lets go!':todayDone+' done'}
+              {todayPct===100?'🎉 Perfect, Chandan!':todayDone===0?'Chandan, start strong':todayDone+' done'}
             </div>
             <div style={{fontSize:12,opacity:0.75,marginTop:2}}>
-              {todayPct===100?'All habits complete!':(daily.length-todayDone)+' left · '+dueEntries.length+' rev due'}
+              {todayPct===100?'GATE + ESE discipline locked today':(daily.length-todayDone)+' left · '+dueEntries.length+' rev due · govt job 2027'}
             </div>
             <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
               <span style={{background:'rgba(255,255,255,0.18)',borderRadius:8,
@@ -1679,8 +1712,8 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
         )}
       </div>
 
-      {/* Appearance & GATE Date */}
-      <SH ch="Appearance & GATE Settings"/>
+      {/* Appearance & GATE/ESE Date */}
+      <SH ch="Appearance & GATE/ESE Settings"/>
       <div style={{background:'#FFFFFF',borderRadius:20,border:'1px solid #E4DAFB',
         padding:16,marginBottom:14,boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
@@ -1718,8 +1751,8 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
           </div>
         </div>
         <div>
-          <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>🎯 GATE Exam Date</div>
-          <div style={{fontSize:11,color:'#79747E',marginBottom:8}}>Used for the countdown on the Today screen</div>
+          <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>🎯 GATE/ESE Target Date</div>
+          <div style={{fontSize:11,color:'#79747E',marginBottom:8}}>Used for Chandan's countdown on the Today screen</div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
             <input type="date" value={gateInput} onChange={e=>setGateInput(e.target.value)}
               style={{flex:1,border:'2px solid #E4DAFB',borderRadius:12,padding:'9px 12px',
@@ -1885,168 +1918,6 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
 }
 
 /* ═══════════════════════════════════════════════════
-   MONTHLY VIEW
-   ═══════════════════════════════════════════════════ */
-function MonthlyView({daily,logs,vy,vm,T,toggleDay,chart7}){
-  const dim=daysIn(vy,vm);
-  const isCurrent=T.y===vy&&T.m===vm;
-  const rel=isCurrent?T.d:dim;
-  const dayStats=useMemo(()=>Array.from({length:dim},(_,di)=>{
-    const day=di+1,k=dk(vy,vm,day);
-    const done=daily.filter((_,idx)=>(logs[k]||{})[idx]).length;
-    const fut=isCurrent&&day>T.d;
-    return{day,k,done,total:daily.length,pct:daily.length?Math.round(done/daily.length*100):0,fut};
-  }),[daily,logs,vy,vm,T.d,isCurrent,dim]);
-  const doneTotal=dayStats.slice(0,rel).reduce((a,d)=>a+d.done,0);
-  const possible=Math.max(1,daily.length*rel);
-  const monthPct=daily.length?Math.round(doneTotal/possible*100):0;
-  const bestDay=dayStats.slice(0,rel).reduce((best,d)=>d.pct>best.pct?d:best,{pct:0,day:'-'});
-  const weekStats=useMemo(()=>{
-    const out=[];
-    for(let start=1;start<=dim;start+=7){
-      const slice=dayStats.slice(start-1,Math.min(start+6,dim));
-      const active=slice.filter(d=>!d.fut);
-      const done=active.reduce((a,d)=>a+d.done,0);
-      const total=Math.max(1,active.reduce((a,d)=>a+d.total,0));
-      out.push({label:`${start}-${Math.min(start+6,dim)}`,pct:active.length?Math.round(done/total*100):0});
-    }
-    return out;
-  },[dayStats,dim]);
-  const runningPoints=chart7.map((d,i)=>`${8+i*15},${82-(d.pct*0.68)}`).join(' ');
-
-  return(
-    <div data-swipe-lock="true" style={{display:'flex',flexDirection:'column',gap:12}}>
-      <div style={{background:`linear-gradient(135deg,${P},${P2})`,
-        borderRadius:22,padding:'17px',color:'#FFF',boxShadow:`0 6px 20px ${P}33`}}>
-        <div style={{fontSize:10,fontWeight:900,letterSpacing:1.2,opacity:0.75,textTransform:'uppercase'}}>Track Score</div>
-        <div style={{display:'flex',alignItems:'flex-end',gap:10,marginTop:4}}>
-          <div style={{fontSize:36,fontWeight:900,lineHeight:1}}>{monthPct}%</div>
-          <div style={{fontSize:12,fontWeight:800,opacity:0.82,marginBottom:5}}>
-            {doneTotal}/{daily.length*rel||0} checks this month
-          </div>
-        </div>
-        <div style={{height:8,background:'rgba(255,255,255,0.24)',borderRadius:5,overflow:'hidden',marginTop:12}}>
-          <div style={{height:'100%',width:`${monthPct}%`,
-            background:'linear-gradient(90deg,#FFFFFF,#B2EBF2)',borderRadius:5,transition:'width 0.5s'}}/>
-        </div>
-      </div>
-
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-        <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:18,padding:13,
-          boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
-          <div style={{fontSize:10,fontWeight:900,color:TS,letterSpacing:1,textTransform:'uppercase'}}>Best Day</div>
-          <div style={{fontSize:26,fontWeight:900,color:'#2E7D32'}}>{bestDay.day}</div>
-          <div style={{fontSize:11,fontWeight:800,color:'#388E3C'}}>{bestDay.pct}% complete</div>
-        </div>
-        <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:18,padding:13,
-          boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
-          <div style={{fontSize:10,fontWeight:900,color:TS,letterSpacing:1,textTransform:'uppercase'}}>Days Tracked</div>
-          <div style={{fontSize:26,fontWeight:900,color:P}}>{rel}</div>
-          <div style={{fontSize:11,fontWeight:800,color:P}}>of {dim} in {MONTHS[vm]}</div>
-        </div>
-      </div>
-
-      <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:20,padding:14,
-        boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-          <div>
-            <div style={{fontSize:12,fontWeight:900,color:P}}>7-Day Running Track</div>
-            <div style={{fontSize:10,color:TS,fontWeight:700}}>Moved from Today for cleaner focus</div>
-          </div>
-          <div style={{fontSize:18,fontWeight:900,color:chart7[6]?.pct>=80?'#2E7D32':chart7[6]?.pct>=50?'#F57C00':'#C62828'}}>
-            {chart7[6]?.pct||0}%
-          </div>
-        </div>
-        <svg viewBox="0 0 106 88" style={{width:'100%',height:120,display:'block'}}>
-          <defs>
-            <linearGradient id="trackFill" x1="0" x2="1">
-              <stop offset="0%" stopColor={P} stopOpacity="0.18"/>
-              <stop offset="100%" stopColor="#00BCD4" stopOpacity="0.2"/>
-            </linearGradient>
-          </defs>
-          <polyline points={`8,82 ${runningPoints} 98,82`} fill="url(#trackFill)" stroke="none"/>
-          <polyline points={runningPoints} fill="none" stroke={P} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-          {chart7.map((d,i)=>(
-            <g key={i}>
-              <circle cx={8+i*15} cy={82-(d.pct*0.68)} r={d.isToday?4.5:3.5} fill={d.isToday?P:'#00A7B5'} stroke="#FFF" strokeWidth="2"/>
-              <text x={8+i*15} y="87" textAnchor="middle" fontSize="7" fontWeight="800" fill={d.isToday?P:TS}>{d.day[0]}</text>
-            </g>
-          ))}
-        </svg>
-      </div>
-
-      <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:20,padding:14,
-        boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
-        <div style={{fontSize:12,fontWeight:900,color:P,marginBottom:10}}>Weekly Graph</div>
-        <div style={{display:'flex',gap:8,alignItems:'flex-end',height:108}}>
-          {weekStats.map((w,i)=>(
-            <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5,minWidth:0}}>
-              <div style={{fontSize:10,fontWeight:900,color:w.pct>=80?'#2E7D32':w.pct>=50?'#F57C00':'#C62828'}}>{w.pct}%</div>
-              <div style={{width:'100%',height:`${Math.max(8,w.pct)}%`,borderRadius:'8px 8px 3px 3px',
-                background:w.pct>=80?'linear-gradient(180deg,#66BB6A,#2E7D32)':w.pct>=50?'linear-gradient(180deg,#FFB74D,#F57C00)':`linear-gradient(180deg,${PC},${P})`,
-                boxShadow:'0 3px 9px rgba(0,0,0,0.08)'}}/>
-              <div style={{fontSize:8,color:TS,fontWeight:800,whiteSpace:'nowrap'}}>{w.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{display:'flex',flexDirection:'column',gap:10}}>
-        {daily.map((h,hi)=>{
-          const col=hc(hi);
-          let dn=0;
-          for(let d=1;d<=rel;d++)if((logs[dk(vy,vm,d)]||{})[hi])dn++;
-          const mpct=rel?Math.round(dn/rel*100):0;
-          return(
-            <div key={hi} style={{background:SUR,border:`1px solid ${col.f}33`,
-              borderRadius:18,padding:12,boxShadow:`0 2px 10px ${col.f}11`}}>
-              <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:10}}>
-                <div style={{width:32,height:32,borderRadius:11,background:col.bg,
-                  display:'flex',alignItems:'center',justifyContent:'center',
-                  color:col.f,fontWeight:900,fontSize:13}}>{hi+1}</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:900,color:TX,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{h}</div>
-                  <div style={{fontSize:10,fontWeight:800,color:col.f}}>{dn}/{rel} days - {mpct}%</div>
-                </div>
-                <div style={{fontSize:22,fontWeight:900,color:col.f}}>{mpct}%</div>
-              </div>
-              <div style={{height:7,background:col.bg,borderRadius:4,overflow:'hidden',marginBottom:10}}>
-                <div style={{height:'100%',width:`${mpct}%`,background:col.f,borderRadius:4}}/>
-              </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:6}}>
-                {Array.from({length:dim},(_,di)=>{
-                  const day=di+1,k2=dk(vy,vm,day);
-                  const on=!!(logs[k2]||{})[hi];
-                  const fut=isCurrent&&day>T.d;
-                  const isT2=isCurrent&&T.d===day;
-                  return(
-                    <button key={di} onClick={()=>!fut&&toggleDay(hi,vy,vm,day)}
-                      disabled={fut}
-                      style={{height:32,borderRadius:9,border:`1.5px solid ${isT2?P:on?col.f:OL}`,
-                        background:on?col.f:(isT2?PC:'#FAFAFF'),
-                        color:on?'#FFF':(isT2?P:TS),fontSize:10,fontWeight:900,
-                        cursor:fut?'default':'pointer',opacity:fut?0.24:1,
-                        fontFamily:'Nunito,sans-serif',boxShadow:on?`0 2px 8px ${col.f}33`:undefined}}>
-                      {day}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-        {!daily.length&&(
-          <div style={{textAlign:'center',padding:'30px 20px',color:TS,
-            background:SUR,border:`1px solid ${OL}`,borderRadius:20}}>
-            <div style={{fontSize:13,fontWeight:700}}>No habits yet - add them in More.</div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════
    WEEKLY VIEW
    ═══════════════════════════════════════════════════ */
 function WeeklyView({weekly,wlogs,CWK,toggleWeekly}){
@@ -2109,8 +1980,6 @@ function App(){
   const [wlogs,setWlogs]=useState(init.wlogs);
   const [revEntries,setRevEntries]=useState(init.revEntries||SEED_ENTRIES);
   const [view,setView]=useState('today');
-  const [vy,setVy]=useState(()=>new Date().getFullYear());
-  const [vm,setVm]=useState(()=>new Date().getMonth());
   const [addType,setAddType]=useState(null);
   const [showAddRev,setShowAddRev]=useState(false);
   const [newName,setNewName]=useState('');
@@ -2201,7 +2070,7 @@ function App(){
   const touchStartX=useRef(null);
   const touchStartY=useRef(null);
   const handleTouchStart=useCallback(e=>{
-    if(view==='monthly'||e.target.closest?.('[data-swipe-lock="true"]')){
+    if(e.target.closest?.('[data-swipe-lock="true"]')){
       touchStartX.current=null;touchStartY.current=null;return;
     }
     touchStartX.current=e.touches[0].clientX;
@@ -2212,7 +2081,7 @@ function App(){
     const dx=e.changedTouches[0].clientX-touchStartX.current;
     const dy=e.changedTouches[0].clientY-touchStartY.current;
     if(Math.abs(dx)<70||Math.abs(dy)>35)return;
-    const VIEWS=['today','monthly','revision','stats','settings'];
+    const VIEWS=['today','stats','revision','achieve','settings'];
     const ci=VIEWS.indexOf(view);
     if(dx<0&&ci<VIEWS.length-1)setView(VIEWS[ci+1]);
     else if(dx>0&&ci>0)setView(VIEWS[ci-1]);
@@ -2304,7 +2173,6 @@ function App(){
 
   /* HABIT TOGGLES */
   const toggleToday=i=>setLogs(p=>({...p,[TK]:{...(p[TK]||{}),[i]:!(p[TK]||{})[i]}}));
-  const toggleDay=(i,y,m,d)=>{const k=dk(y,m,d);setLogs(p=>({...p,[k]:{...(p[k]||{}),[i]:!(p[k]||{})[i]}}));};
   const toggleWeekly=i=>setWlogs(p=>({...p,[CWK]:{...(p[CWK]||{}),[i]:!(p[CWK]||{})[i]}}));
 
   /* REVISION TOGGLE */
@@ -2435,24 +2303,14 @@ function App(){
   const todayPct=daily.length?Math.round(todayDone/daily.length*100):0;
   const bestStr=useMemo(()=>Math.max(0,...daily.map((_,i)=>getStreak(logs,i))),[logs,daily]);
   const avg30=useMemo(()=>daily.length?Math.round(daily.reduce((a,_,i)=>a+getRate(logs,i,30),0)/daily.length):0,[logs,daily]);
-  const chart7=useMemo(()=>Array.from({length:7},(_,i)=>{
-    const d=new Date();d.setDate(d.getDate()-(6-i));
-    const k=dk(d.getFullYear(),d.getMonth(),d.getDate());
-    const done=daily.filter((_,idx)=>(logs[k]||{})[idx]).length;
-    return{day:WD[d.getDay()],pct:daily.length?Math.round(done/daily.length*100):0,isToday:i===6};
-  }),[logs,daily]);
-
   const dueRevCount=useMemo(()=>getTodayDueEntries(revEntries).length,[revEntries]);
   const weakSuggestions=useMemo(()=>getWeakSuggestions({revEntries,logs,daily,studyHours}),[revEntries,logs,daily,studyHours]);
-  const prevM=()=>vm===0?(setVm(11),setVy(y=>y-1)):setVm(m=>m-1);
-  const nextM=()=>vm===11?(setVm(0),setVy(y=>y+1)):setVm(m=>m+1);
 
   /* NAV ITEMS */
   const NAV=[
     ['today',IC.home,'Today'],
-    ['monthly',IC.bar,'Track'],
+    ['stats',IC.bar,'Stats'],
     ['revision',IC.book,'Revise'],
-    ['stats',IC.bell,'Stats'],
     ['achieve','🏆','Achieve'],
     ['settings',IC.gear,'More'],
   ];
@@ -2530,7 +2388,7 @@ function App(){
           <div>
             <div style={{fontSize:16,fontWeight:900,color:P,letterSpacing:-0.3}}>HABITRA</div>
             <div style={{fontSize:10,color:TS,fontWeight:500,marginTop:-1}}>
-              {new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}
+              Chandan Kumar · GATE/ESE 2027
             </div>
           </div>
         </div>
@@ -2555,19 +2413,6 @@ function App(){
               border:`1px solid ${syncStatus==='synced'?'#A5D6A7':syncStatus==='saving'?'#FFB74D':syncStatus==='loading'?OL:'#FFCDD2'}`}}>
             <span>{syncStatus==='synced'?'☁️ Synced':syncStatus==='saving'?'⏳ Saving…':syncStatus==='loading'?'⏳ Loading…':'📴 Offline'}</span>
           </div>
-          {view==='monthly'&&(
-            <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <button onClick={prevM} style={{background:'#EDE7FF',border:'none',
-                borderRadius:9,padding:'5px 11px',cursor:'pointer',
-                fontSize:15,fontWeight:700,color:P,fontFamily:'Nunito,sans-serif'}}>‹</button>
-              <span style={{fontSize:12,fontWeight:700,color:TX,minWidth:76,textAlign:'center'}}>
-                {MONTHS[vm]} {vy}
-              </span>
-              <button onClick={nextM} style={{background:'#EDE7FF',border:'none',
-                borderRadius:9,padding:'5px 11px',cursor:'pointer',
-                fontSize:15,fontWeight:700,color:P,fontFamily:'Nunito,sans-serif'}}>›</button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -2586,9 +2431,6 @@ function App(){
             darkMode={darkMode}
             suggestions={weakSuggestions}
             xp={xp} badges={badges}/>
-        )}
-        {view==='monthly'&&(
-          <MonthlyView daily={daily} logs={logs} vy={vy} vm={vm} T={T} toggleDay={toggleDay} chart7={chart7}/>
         )}
         {view==='weekly'&&(
           <WeeklyView weekly={weekly} wlogs={wlogs} CWK={CWK} toggleWeekly={toggleWeekly}/>
