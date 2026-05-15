@@ -87,10 +87,21 @@ self.addEventListener('message',e=>{
   window.__FB_SAVE__=async(data)=>{
     try{await setDoc(REF,data);}catch(e){console.warn('FB save fail',e);}
   };
+  window.__FB_GET_DOC__=async(collection,id)=>{
+    try{
+      const s=await getDoc(doc(db,collection,id));
+      return s.exists()?s.data():null;
+    }catch(e){console.warn('FB get doc fail',e);throw e;}
+  };
+  window.__FB_SET_DOC__=async(collection,id,data)=>{
+    try{return await setDoc(doc(db,collection,id),data);}
+    catch(e){console.warn('FB set doc fail',e);throw e;}
+  };
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:#F6F0FF}
+:root{--accent:#6750A4;--accent-soft:#EADDFF;--app-bg:#F6F0FF;--surface-soft:#F0EAFE;--outline:#E4DAFB}
+html,body{height:100%;background:var(--app-bg)}
 body{font-family:'Nunito','Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 #root{min-height:100vh}
 button,input,textarea,select{font-family:'Nunito','Segoe UI',sans-serif}
@@ -105,6 +116,24 @@ body.dark #root{background:#1A1625}
 @keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
 .confetti-piece{position:fixed;width:10px;height:10px;top:-20px;z-index:9999;animation:confetti-fall 2.5s ease-in forwards;border-radius:2px;}
 @keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(103,80,164,0.4)}50%{box-shadow:0 0 0 12px rgba(103,80,164,0)}}
+/* ── MINIMALIST CARD SYSTEM ── */
+.card{background:#FFFFFF;border-radius:16px;border:1px solid #EDE8FB;box-shadow:0 1px 6px rgba(103,80,164,0.06);}
+.card-section{padding:14px 16px;}
+.section-label{font-size:10px;font-weight:800;color:#9E94C0;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;}
+.view-panel{animation:viewIn 0.22s ease both}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.view-panel{animation:none}}
+.strip{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #F0EAFE;}
+.strip:last-child{border-bottom:none;}
+.stat-pill{background:#F6F0FF;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;color:#6750A4;}
+.mini-tag{background:#EDE7FF;border-radius:8px;padding:2px 8px;font-size:10px;font-weight:800;color:#7C4DFF;}
+.soft-btn{background:#F6F0FF;border:none;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:800;color:#6750A4;cursor:pointer;font-family:'Nunito',sans-serif;transition:background 0.15s;}
+.soft-btn:hover{background:#EDE7FF;}
+.hab-row{display:flex;align-items:center;gap:11px;width:100%;padding:10px 14px;border-bottom:1px solid #F6F0FF;background:none;border-left:none;border-right:none;border-top:none;text-align:left;cursor:pointer;transition:background 0.12s;}
+.hab-row:last-child{border-bottom:none;}
+.hab-row:active{background:#F6F0FF;}
+.section-divider{height:1px;background:#F0EAFE;margin:2px 0;}
+
 </style>
 </head>
 <body>
@@ -117,8 +146,37 @@ body.dark #root{background:#1A1625}
 const {useState,useEffect,useCallback,useMemo,useRef} = React;
 
 /* ── THEME ─────────────────────────────────────────── */
-const P='#6750A4',PC='#EADDFF',BG='#F6F0FF',SUR='#FFFFFF',
-      SV='#F0EAFE',OL='#E4DAFB',TX='#1C1B1F',TM='#49454F',TS='#79747E';
+let P='#6750A4',PC='#EADDFF',BG='#F6F0FF',SUR='#FFFFFF',
+    SV='#F0EAFE',OL='#E4DAFB',TX='#1C1B1F',TM='#49454F',TS='#79747E';
+
+const PALETTES={
+  aurora:{name:'Aurora',desc:'multi-colour calm',p:'#5B5CE2',pc:'#E8E9FF',bg:'#F7F8FC',sv:'#F0F4FF',ol:'#E1E6F2',
+    grad:['#5B5CE2','#00A6A6','#FF8A65'],hero:['#5B5CE2','#00A6A6'],good:'#00A676',warn:'#F57C00',danger:'#D32F2F'},
+  purple:{name:'Purple',desc:'classic Habitra',p:'#6750A4',pc:'#EADDFF',bg:'#F6F0FF',sv:'#F0EAFE',ol:'#E4DAFB',
+    grad:['#6750A4','#9C68FF','#F57C00'],hero:['#6750A4','#8B5CF6'],good:'#2E7D32',warn:'#F57C00',danger:'#D32F2F'},
+  ocean:{name:'Ocean',desc:'blue + teal',p:'#006C9A',pc:'#DDF4FF',bg:'#F3FAFD',sv:'#EAF7FB',ol:'#D2EAF1',
+    grad:['#006C9A','#00A6A6','#43A047'],hero:['#006C9A','#00A6A6'],good:'#00897B',warn:'#F9A825',danger:'#C62828'},
+  forest:{name:'Forest',desc:'green + gold',p:'#2E7D32',pc:'#E8F5E9',bg:'#F6FAF5',sv:'#EEF7ED',ol:'#DCEED9',
+    grad:['#2E7D32','#00897B','#F9A825'],hero:['#2E7D32','#00897B'],good:'#2E7D32',warn:'#F9A825',danger:'#C62828'},
+  sunset:{name:'Sunset',desc:'coral + violet',p:'#C2410C',pc:'#FFE7DC',bg:'#FFF8F4',sv:'#FFF1EA',ol:'#F6DED2',
+    grad:['#C2410C','#E11D48','#7C3AED'],hero:['#C2410C','#E11D48'],good:'#2E7D32',warn:'#C2410C',danger:'#B91C1C'},
+  slate:{name:'Slate',desc:'minimal neutral',p:'#334155',pc:'#E2E8F0',bg:'#F8FAFC',sv:'#F1F5F9',ol:'#E2E8F0',
+    grad:['#334155','#0F766E','#7C3AED'],hero:['#334155','#0F766E'],good:'#0F766E',warn:'#D97706',danger:'#DC2626'},
+};
+let THEME=PALETTES.aurora;
+const applyPaletteGlobals=(id='aurora')=>{
+  THEME=PALETTES[id]||PALETTES.aurora;
+  P=THEME.p;PC=THEME.pc;BG=THEME.bg;SV=THEME.sv;OL=THEME.ol;
+  SUR='#FFFFFF';TX='#1C1B1F';TM='#49454F';TS='#79747E';
+  if(typeof document!=='undefined'&&document.documentElement){
+    const root=document.documentElement;
+    root.style.setProperty('--accent',P);
+    root.style.setProperty('--accent-soft',PC);
+    root.style.setProperty('--app-bg',BG);
+    root.style.setProperty('--surface-soft',SV);
+    root.style.setProperty('--outline',OL);
+  }
+};
 
 const HCOLS=[
   {bg:'#EDE7FF',f:'#7C4DFF',dk:'#21005D',lt:'#F5F0FF'},
@@ -149,6 +207,7 @@ const REV_LABELS={0:'Same Day',3:'3rd Day',6:'6th Day',30:'30th Day',60:'60th Da
 const XP_REWARDS={habit:5,allHabits:25,revision:10,studyHour:8,streak7:50,streak30:200,firstEntry:20};
 const LEVEL_THRESHOLDS=[0,100,250,500,900,1400,2100,3000,4200,5600,7500];
 const LEVEL_NAMES=['Rookie','Scholar','Studious','Diligent','Focused','Sharp','Expert','Master','Elite','Prodigy','Legend'];
+const POMO_SECONDS={focus:25*60,short:5*60,long:15*60};
 const getLevel=xp=>{let l=0;for(let i=0;i<LEVEL_THRESHOLDS.length;i++){if(xp>=LEVEL_THRESHOLDS[i])l=i;}return l;};
 const getLevelProgress=xp=>{const l=getLevel(xp);const cur=LEVEL_THRESHOLDS[l];const nxt=LEVEL_THRESHOLDS[l+1]||LEVEL_THRESHOLDS[l]+2000;return Math.round((xp-cur)/(nxt-cur)*100);};
 const getLevelName=xp=>LEVEL_NAMES[Math.min(getLevel(xp),LEVEL_NAMES.length-1)];
@@ -308,6 +367,8 @@ const freshData=()=>({
   weekly:['📋 Full mock test','💪 Exercise 3x this week','🥗 Clean diet','🎯 Revise weak topics'],
   logs:{},wlogs:{},
   revEntries:SEED_ENTRIES,
+  studyHours:{},
+  pyqRecords:[],
 });
 
 const loadData=()=>{
@@ -341,6 +402,7 @@ const wkKey=(dt=new Date())=>{
 };
 const fmtDate=s=>{if(!s)return '';const d=new Date(s);return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const buzz=(pattern=18)=>{try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}};
 
 /* ── HABIT STAT UTILS ────────────────────────────────*/
 const getStreak=(logs,idx)=>{
@@ -390,6 +452,103 @@ const getEntryStatus=(entry)=>{
 const getTodayDueEntries=(entries)=>entries.filter(e=>
   REV_INTERVALS.some(iv=>isRevDueToday(e,iv)||isRevOverdue(e,iv))
 );
+
+/* ── POWER FEATURE UTILS ───────────────────────────── */
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const average=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;
+
+function getSubjectReadinessRows({revEntries,pyqRecords=[]}){
+  const dataSubjects=[...new Set([
+    ...revEntries.map(e=>e.subject).filter(Boolean),
+    ...pyqRecords.map(p=>p.subject).filter(Boolean),
+  ])];
+  const subjects=(dataSubjects.length?dataSubjects:GATE_SUBJECTS.slice(0,8));
+  return subjects.map(subject=>{
+    const entries=revEntries.filter(e=>e.subject===subject);
+    const pyqs=pyqRecords.filter(p=>p.subject===subject);
+    const solvedPyq=pyqs.filter(p=>p.solved).length;
+    const totalSlots=entries.length*REV_INTERVALS.length;
+    const doneSlots=entries.reduce((a,e)=>a+REV_INTERVALS.filter(iv=>e.reviews[String(iv)]===true).length,0);
+    const pendingSlots=entries.reduce((a,e)=>a+REV_INTERVALS.filter(iv=>e.reviews[String(iv)]===null).length,0);
+    const overdue=entries.reduce((a,e)=>a+REV_INTERVALS.filter(iv=>isRevOverdue(e,iv)).length,0);
+    const revScore=totalSlots?doneSlots/totalSlots*100:0;
+    const coverageScore=clamp(entries.length*9,0,100);
+    const pyqScore=clamp(solvedPyq*10,0,100);
+    const lastStudy=entries.map(e=>e.dateStudied).sort().pop();
+    const daysSince=lastStudy?Math.max(0,diffDays(todayStr(),lastStudy)):999;
+    const recentScore=daysSince<=3?100:daysSince<=7?80:daysSince<=14?58:daysSince<=30?35:10;
+    const score=clamp(Math.round(revScore*0.43+coverageScore*0.22+pyqScore*0.2+recentScore*0.15-overdue*5),0,100);
+    return{subject,score,entries:entries.length,doneSlots,totalSlots,pendingSlots,overdue,solvedPyq,pyqTotal:pyqs.length,lastStudy,daysSince};
+  }).sort((a,b)=>b.score-a.score);
+}
+
+function getRankEstimate({readinessRows,avg30,totalHours,gateCountdown}){
+  const active=readinessRows.filter(r=>r.entries||r.pyqTotal);
+  const readiness=average((active.length?active:readinessRows).map(r=>r.score));
+  const habitScore=avg30||0;
+  const hourScore=clamp(totalHours/250*100,0,100);
+  const urgencyPenalty=gateCountdown<45?8:gateCountdown<90?3:0;
+  const preparedness=clamp(Math.round(readiness*0.62+habitScore*0.2+hourScore*0.18-urgencyPenalty),0,100);
+  const marks=clamp(Math.round(preparedness*0.78+8),0,100);
+  let range='Above 50000',tone='#C62828',label='Foundation phase';
+  if(marks>=75){range='Under 1000';tone='#2E7D32';label='Top-rank pace';}
+  else if(marks>=65){range='1000 - 3000';tone='#00897B';label='Strong pace';}
+  else if(marks>=55){range='3000 - 8000';tone='#1565C0';label='Competitive pace';}
+  else if(marks>=45){range='8000 - 18000';tone='#F57C00';label='Needs sharper revision';}
+  else if(marks>=35){range='18000 - 50000';tone='#E65100';label='Catch-up required';}
+  const confidence=active.length>=8?'medium':active.length>=4?'low-medium':'low';
+  return{preparedness,marks,range,tone,label,confidence,activeSubjects:active.length};
+}
+
+function getPaceWarning({revEntries,gateCountdown,avg30,studyHours}){
+  const pending=revEntries.reduce((a,e)=>a+REV_INTERVALS.filter(iv=>e.reviews[String(iv)]===null).length,0);
+  const overdue=revEntries.reduce((a,e)=>a+REV_INTERVALS.filter(iv=>isRevOverdue(e,iv)).length,0);
+  const days=Math.max(1,gateCountdown||1);
+  const neededPerDay=pending/days;
+  let recentHours=0;
+  for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);recentHours+=studyHours[dk(d.getFullYear(),d.getMonth(),d.getDate())]||0;}
+  const weeklyAvg=recentHours/7;
+  let status='On track',tone='#2E7D32',message='Your current backlog is manageable if you keep the daily rhythm.';
+  if(overdue>=12||neededPerDay>4||avg30<35){
+    status='Falling behind';tone='#C62828';message='Clear overdue revisions first, then cap each day with a small PYQ block.';
+  }else if(overdue>=5||neededPerDay>2||avg30<55||weeklyAvg<1){
+    status='Needs attention';tone='#F57C00';message='You are close, but the pace needs a little tightening this week.';
+  }
+  return{status,tone,message,pending,overdue,neededPerDay:Math.round(neededPerDay*10)/10,weeklyAvg:Math.round(weeklyAvg*10)/10};
+}
+
+function buildSmartSchedule({revEntries,pyqRecords=[],readinessRows=[],days=14,maxPerDay=4}){
+  const tasks=[];
+  revEntries.forEach(entry=>{
+    REV_INTERVALS.forEach(iv=>{
+      if(entry.reviews[String(iv)]===null){
+        const due=getRevDate(entry,iv);
+        tasks.push({type:'Revision',subject:entry.subject,topic:entry.topic||'Revision entry',
+          label:REV_LABELS[iv],due,priority:due<todayStr()?0:1});
+      }
+    });
+  });
+  pyqRecords.filter(p=>!p.solved).forEach(p=>{
+    tasks.push({type:'PYQ',subject:p.subject,topic:p.topic||'PYQ practice',
+      label:p.year?String(p.year):'PYQ',due:todayStr(),priority:2});
+  });
+  readinessRows.filter(r=>r.score<55).slice(0,5).forEach(r=>{
+    tasks.push({type:'Weak Topic',subject:r.subject,topic:'Concept refresh + 5 questions',
+      label:`${r.score}% ready`,due:addDays(todayStr(),2),priority:3});
+  });
+  tasks.sort((a,b)=>a.priority-b.priority||new Date(a.due)-new Date(b.due));
+  const plan=Array.from({length:days},(_,i)=>({date:addDays(todayStr(),i),tasks:[]}));
+  let cursor=0;
+  tasks.forEach(task=>{
+    let placed=false;
+    for(let tries=0;tries<plan.length;tries++){
+      const day=plan[(cursor+tries)%plan.length];
+      if(day.tasks.length<maxPerDay){day.tasks.push(task);cursor=(cursor+tries)%plan.length;placed=true;break;}
+    }
+    if(!placed&&plan.length)plan[plan.length-1].tasks.push(task);
+  });
+  return plan;
+}
 
 /* ── HEATMAP COMPONENT ───────────────────────────── */
 function HeatmapGrid({logs,daily,weeks=15}){
@@ -566,7 +725,7 @@ function GamificationView({xp,badges,daily,logs,revEntries,studyHours}){
 
 /* ── SUGGESTIONS CARD ────────────────────────────── */
 function SuggestionsCard({suggestions}){
-  const [open,setOpen]=useState(true);
+  const [open,setOpen]=useState(false);
   if(!suggestions.length)return null;
   return(
     <div style={{background:'#FFFFFF',border:'2px solid #E4DAFB',
@@ -1282,7 +1441,7 @@ function StatsView({daily,logs,revEntries}){
 }
 
 /* ═══════════════════════════════════════════════════
-   TODAY VIEW (Habits + Due Revisions combined)
+   TODAY VIEW — Minimalist redesign
    ═══════════════════════════════════════════════════ */
 function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,todayDone,todayPct,bestStr,avg30,
   gateCountdown,gateDate,setGateDate,todayHours,weekHours,totalHours,
@@ -1292,259 +1451,288 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,toda
   const quote=useMemo(()=>todayQuote(),[]);
   const [editGate,setEditGate]=useState(false);
   const [gateInput,setGateInput]=useState(gateDate);
+  const [showChart,setShowChart]=useState(false);
+  const [showDueRevs,setShowDueRevs]=useState(false);
+  const gateColor=gateCountdown<=30?'#FF5722':gateCountdown<=90?'#F57C00':P;
 
   return(
-    <div>
-      {/* GATE COUNTDOWN */}
-      <div style={{background:gateCountdown<=30?'linear-gradient(135deg,#FF5722,#FF8A65)':gateCountdown<=90?'linear-gradient(135deg,#F57C00,#FFB74D)':'linear-gradient(135deg,#1565C0,#42A5F5)',
-        borderRadius:22,padding:'14px 18px',marginBottom:10,
-        display:'flex',alignItems:'center',justifyContent:'space-between',
-        boxShadow:gateCountdown<=30?'0 4px 18px rgba(255,87,34,0.35)':'0 4px 18px rgba(21,101,192,0.28)'}}>
-        <div>
-          <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.8)',letterSpacing:1.5,textTransform:'uppercase'}}>GATE Countdown</div>
-          <div style={{fontSize:36,fontWeight:900,color:'#FFF',lineHeight:1,marginTop:2}}>{gateCountdown}</div>
-          <div style={{fontSize:11,color:'rgba(255,255,255,0.85)',fontWeight:600}}>days remaining</div>
-        </div>
-        <div style={{textAlign:'right'}}>
-          {editGate?(
-            <div style={{display:'flex',flexDirection:'column',gap:5,alignItems:'flex-end'}}>
-              <input type="date" value={gateInput} onChange={e=>setGateInput(e.target.value)}
-                style={{border:'none',borderRadius:8,padding:'5px 8px',fontSize:12,fontWeight:700,
-                  background:'rgba(255,255,255,0.25)',color:'#FFF',outline:'none',fontFamily:'Nunito,sans-serif'}}/>
-              <button onClick={()=>{setGateDate(gateInput);setEditGate(false);}}
-                style={{background:'rgba(255,255,255,0.3)',border:'none',borderRadius:8,
-                  padding:'4px 12px',color:'#FFF',fontWeight:800,fontSize:12,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
-                Save
-              </button>
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+
+      {/* ── TOP INFO STRIP: Gate + Study Hours ── */}
+      <div style={{background:'#FFFFFF',borderRadius:16,border:'1px solid #EDE8FB',
+        boxShadow:'0 1px 6px rgba(103,80,164,0.06)',overflow:'hidden'}}>
+
+        {/* Gate countdown row */}
+        <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',
+          borderBottom:'1px solid #F0EAFE'}}>
+          <div style={{width:36,height:36,borderRadius:12,
+            background:gateColor+'18',display:'flex',alignItems:'center',
+            justifyContent:'center',flexShrink:0}}>
+            <span style={{fontSize:18}}>🎯</span>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:10,fontWeight:700,color:'#9E94C0',letterSpacing:1,textTransform:'uppercase'}}>GATE Countdown</div>
+            <div style={{fontSize:15,fontWeight:900,color:gateColor,lineHeight:1.2}}>
+              {gateCountdown} days left
+              {editGate&&(
+                <span style={{marginLeft:8}}>
+                  <input type="date" value={gateInput} onChange={e=>setGateInput(e.target.value)}
+                    style={{border:'1px solid #E4DAFB',borderRadius:8,padding:'2px 7px',fontSize:11,
+                      fontWeight:700,color:'#1C1B1F',background:'#F6F0FF',outline:'none',
+                      fontFamily:'Nunito,sans-serif',marginRight:5}}/>
+                  <button onClick={()=>{setGateDate(gateInput);setEditGate(false);}}
+                    style={{background:P,border:'none',borderRadius:8,padding:'3px 10px',color:'#FFF',
+                      fontWeight:800,fontSize:11,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>Save</button>
+                </span>
+              )}
             </div>
-          ):(
-            <div>
-              <div style={{fontSize:11,color:'rgba(255,255,255,0.75)',marginBottom:4}}>{gateDate}</div>
-              <button onClick={()=>{setGateInput(gateDate);setEditGate(true);}}
-                style={{background:'rgba(255,255,255,0.2)',border:'1px solid rgba(255,255,255,0.4)',
-                  borderRadius:10,padding:'4px 12px',color:'#FFF',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
-                ✏️ Set Date
-              </button>
-            </div>
+            <div style={{fontSize:10,color:'#9E94C0',fontWeight:500}}>{gateDate}</div>
+          </div>
+          {!editGate&&(
+            <button onClick={()=>{setGateInput(gateDate);setEditGate(true);}}
+              style={{background:'#F6F0FF',border:'none',borderRadius:10,padding:'5px 10px',
+                cursor:'pointer',fontSize:11,fontWeight:700,color:'#9E94C0',
+                fontFamily:'Nunito,sans-serif'}}>✏️ Edit</button>
           )}
         </div>
-      </div>
 
-      {/* QUOTE OF THE DAY */}
-      <div style={{background:darkMode?'#2D2640':'linear-gradient(135deg,#EDE7FF,#F3EEFF)',
-        borderRadius:18,padding:'13px 16px',marginBottom:10,
-        border:'1px solid #D4C8FF'}}>
-        <div style={{fontSize:10,fontWeight:700,color:P,letterSpacing:1.5,marginBottom:5}}>✨ TODAY'S MOTIVATION</div>
-        <div style={{fontSize:13,fontWeight:600,color:darkMode?'#E8E0FF':'#3D2B7A',lineHeight:1.5,fontStyle:'italic'}}>"{quote.q}"</div>
-        <div style={{fontSize:10,color:'#9E8ACA',fontWeight:700,marginTop:5}}>— {quote.a}</div>
-      </div>
-
-      {/* STUDY HOURS TRACKER */}
-      <div style={{background:darkMode?'#1E2D1E':'linear-gradient(135deg,#E8F5E9,#F1FAF1)',
-        borderRadius:18,padding:'13px 16px',marginBottom:12,
-        border:'1px solid #A5D6A7',display:'flex',alignItems:'center',gap:12}}>
-        <div style={{flex:1}}>
-          <div style={{fontSize:10,fontWeight:700,color:'#2E7D32',letterSpacing:1.2}}>📚 STUDY TIME</div>
-          <div style={{display:'flex',gap:10,marginTop:4,flexWrap:'wrap'}}>
-            <div>
-              <span style={{fontSize:22,fontWeight:900,color:'#2E7D32'}}>{todayHours}h</span>
-              <span style={{fontSize:10,color:'#388E3C',fontWeight:600,marginLeft:3}}>today</span>
-            </div>
-            <div>
-              <span style={{fontSize:16,fontWeight:800,color:'#43A047'}}>{weekHours}h</span>
-              <span style={{fontSize:10,color:'#388E3C',fontWeight:600,marginLeft:3}}>this week</span>
-            </div>
-            <div>
-              <span style={{fontSize:14,fontWeight:700,color:'#66BB6A'}}>{Math.round(totalHours)}h</span>
-              <span style={{fontSize:10,color:'#388E3C',fontWeight:600,marginLeft:3}}>total</span>
+        {/* Study Hours row */}
+        <div style={{display:'flex',alignItems:'center',gap:12,padding:'11px 16px'}}>
+          <div style={{width:36,height:36,borderRadius:12,
+            background:'#E8F5E9',display:'flex',alignItems:'center',
+            justifyContent:'center',flexShrink:0}}>
+            <span style={{fontSize:18}}>📚</span>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:10,fontWeight:700,color:'#9E94C0',letterSpacing:1,textTransform:'uppercase'}}>Study Time</div>
+            <div style={{display:'flex',gap:10,alignItems:'baseline',flexWrap:'wrap'}}>
+              <span style={{fontSize:16,fontWeight:900,color:'#2E7D32'}}>{todayHours}h</span>
+              <span style={{fontSize:11,color:'#81C784',fontWeight:600}}>today</span>
+              <span style={{fontSize:13,fontWeight:700,color:'#43A047'}}>{weekHours}h</span>
+              <span style={{fontSize:11,color:'#81C784',fontWeight:600}}>week</span>
+              <span style={{fontSize:12,fontWeight:600,color:'#66BB6A'}}>{Math.round(totalHours)}h</span>
+              <span style={{fontSize:11,color:'#81C784',fontWeight:500}}>total</span>
             </div>
           </div>
-        </div>
-        <button onClick={()=>setShowHoursInput(v=>!v)}
-          style={{background:'linear-gradient(135deg,#43A047,#66BB6A)',border:'none',
-            borderRadius:14,padding:'9px 14px',cursor:'pointer',color:'#FFF',
-            fontSize:12,fontWeight:800,flexShrink:0,fontFamily:'Nunito,sans-serif'}}>
-          {showHoursInput?'Cancel':'+ Log'}
-        </button>
-      </div>
-      {showHoursInput&&(
-        <div style={{background:'#F1FAF1',borderRadius:14,padding:'12px 14px',marginBottom:12,
-          border:'1px solid #A5D6A7',display:'flex',gap:9,alignItems:'center'}}>
-          <input type="number" min="0" max="24" step="0.5" value={hoursInput}
-            onChange={e=>setHoursInput(e.target.value)}
-            onKeyDown={e=>e.key==='Enter'&&logHours()}
-            autoFocus
-            placeholder="e.g. 4.5"
-            style={{flex:1,border:'2px solid #A5D6A7',borderRadius:10,padding:'9px 12px',
-              fontSize:15,fontWeight:700,color:'#1B5E20',background:'#FFF',outline:'none',
-              fontFamily:'Nunito,sans-serif'}}/>
-          <span style={{fontSize:13,fontWeight:600,color:'#388E3C'}}>hours</span>
-          <button onClick={logHours}
-            style={{background:'#43A047',border:'none',borderRadius:10,padding:'9px 16px',
-              cursor:'pointer',color:'#FFF',fontWeight:800,fontSize:13,fontFamily:'Nunito,sans-serif'}}>
-            Save
+          <button onClick={()=>setShowHoursInput(v=>!v)}
+            style={{background:showHoursInput?'#FFEBEE':'#E8F5E9',border:'none',
+              borderRadius:10,padding:'6px 12px',cursor:'pointer',color:showHoursInput?'#D32F2F':'#2E7D32',
+              fontSize:11,fontWeight:800,flexShrink:0,fontFamily:'Nunito,sans-serif'}}>
+            {showHoursInput?'Cancel':'+ Log'}
           </button>
         </div>
-      )}
 
-      {/* Hero */}
-      <div style={{background:'linear-gradient(135deg,#6750A4 0%,#9C68FF 100%)',
-        borderRadius:26,padding:'18px 18px 18px 20px',marginBottom:14,
-        display:'flex',alignItems:'center',gap:14,
-        boxShadow:'0 8px 28px rgba(103,80,164,0.28)'}}>
-        <div style={{position:'relative',flexShrink:0}}>
-          <Ring pct={todayPct} size={95} color='#FFF'/>
-          <div style={{position:'absolute',top:'50%',left:'50%',
-            transform:'translate(-50%,-50%)',textAlign:'center',lineHeight:1}}>
-            <div style={{fontSize:19,fontWeight:900,color:'#FFF'}}>{todayPct}%</div>
+        {showHoursInput&&(
+          <div style={{padding:'0 16px 12px',display:'flex',gap:8,alignItems:'center'}}>
+            <input type="number" min="0" max="24" step="0.5" value={hoursInput}
+              onChange={e=>setHoursInput(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&logHours()}
+              autoFocus placeholder="e.g. 4.5"
+              style={{flex:1,border:'2px solid #A5D6A7',borderRadius:10,padding:'8px 12px',
+                fontSize:14,fontWeight:700,color:'#1B5E20',background:'#F1FAF1',outline:'none',
+                fontFamily:'Nunito,sans-serif'}}/>
+            <span style={{fontSize:12,color:'#388E3C',fontWeight:600}}>hours</span>
+            <button onClick={logHours}
+              style={{background:'#43A047',border:'none',borderRadius:10,padding:'8px 14px',
+                cursor:'pointer',color:'#FFF',fontWeight:800,fontSize:12,fontFamily:'Nunito,sans-serif'}}>
+              Save
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── HERO CARD: Progress + Stats + Quote ── */}
+      <div style={{background:`linear-gradient(135deg,${THEME.hero[0]} 0%,${THEME.hero[1]} 100%)`,
+        borderRadius:20,padding:'18px 20px',
+        boxShadow:'0 6px 24px rgba(103,80,164,0.22)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:12}}>
+          <div style={{position:'relative',flexShrink:0}}>
+            <Ring pct={todayPct} size={88} color='#FFF'/>
+            <div style={{position:'absolute',top:'50%',left:'50%',
+              transform:'translate(-50%,-50%)',textAlign:'center'}}>
+              <div style={{fontSize:17,fontWeight:900,color:'#FFF',lineHeight:1}}>{todayPct}%</div>
+            </div>
+          </div>
+          <div style={{color:'#FFF',flex:1}}>
+            <div style={{fontSize:22,fontWeight:900,lineHeight:1.2}}>
+              {todayPct===100?'🎉 Perfect!':todayDone===0?'Lets go!':todayDone+' done'}
+            </div>
+            <div style={{fontSize:12,opacity:0.75,marginTop:2}}>
+              {todayPct===100?'All habits complete!':(daily.length-todayDone)+' left · '+dueEntries.length+' rev due'}
+            </div>
+            <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
+              <span style={{background:'rgba(255,255,255,0.18)',borderRadius:8,
+                padding:'3px 9px',fontSize:10,fontWeight:700}}>🔥 {bestStr}d</span>
+              <span style={{background:'rgba(255,255,255,0.18)',borderRadius:8,
+                padding:'3px 9px',fontSize:10,fontWeight:700}}>📊 {avg30}% / 30d</span>
+              <span style={{background:'rgba(255,255,255,0.18)',borderRadius:8,
+                padding:'3px 9px',fontSize:10,fontWeight:700}}>
+                {getLevel(xp)<=2?'🌱':getLevel(xp)<=4?'📖':getLevel(xp)<=6?'🎯':'🏆'} Lv{getLevel(xp)}
+              </span>
+            </div>
           </div>
         </div>
-        <div style={{color:'#FFF',flex:1}}>
-          <div style={{fontSize:26,fontWeight:900,lineHeight:1.1}}>{todayPct===100?'🎉 Perfect day!':todayDone+' habits'}</div>
-          <div style={{fontSize:12,opacity:0.75,marginTop:2}}>
-            {daily.length-todayDone} left · {dueEntries.length} revisions due
+        <div style={{marginBottom:10}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:9,
+            color:'rgba(255,255,255,0.6)',marginBottom:3}}>
+            <span>{getLevelName(xp)} · {xp} XP · {badges.length}/{ALL_BADGES.length} badges</span>
+            <span>{getLevelProgress(xp)}% → Lv{getLevel(xp)+1}</span>
           </div>
-          <div style={{display:'flex',gap:7,marginTop:10,flexWrap:'wrap'}}>
-            <span style={{background:'rgba(255,255,255,0.22)',borderRadius:10,
-              padding:'3px 10px',fontSize:11,fontWeight:700}}>🔥 Best: {bestStr}d</span>
-            <span style={{background:'rgba(255,255,255,0.22)',borderRadius:10,
-              padding:'3px 10px',fontSize:11,fontWeight:700}}>📊 30d: {avg30}%</span>
+          <div style={{height:4,background:'rgba(255,255,255,0.2)',borderRadius:2,overflow:'hidden'}}>
+            <div style={{height:'100%',width:`${getLevelProgress(xp)}%`,
+              background:'rgba(255,255,255,0.85)',borderRadius:2,transition:'width 0.5s'}}/>
           </div>
+        </div>
+        <div style={{borderTop:'1px solid rgba(255,255,255,0.15)',paddingTop:10}}>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.82)',fontStyle:'italic',lineHeight:1.5}}>
+            ✨ "{quote.q}"
+          </div>
+          <div style={{fontSize:9,color:'rgba(255,255,255,0.5)',fontWeight:700,marginTop:2}}>— {quote.a}</div>
         </div>
       </div>
 
-      {/* Due revisions banner */}
+      {/* ── DUE REVISIONS (collapsible) ── */}
       {dueEntries.length>0&&(
-        <div style={{background:'linear-gradient(135deg,#FFF3E0,#FFE0B2)',
-          borderRadius:20,padding:'14px',marginBottom:14,
-          border:'2px solid #FFB74D',
-          boxShadow:'0 3px 14px rgba(255,152,0,0.18)'}}>
-          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-            <Ico d={IC.bell} s={16} c='#E65100'/>
-            <span style={{fontSize:13,fontWeight:900,color:'#E65100'}}>
-              {dueEntries.length} Revision{dueEntries.length>1?'s':''} Due Today
+        <div style={{background:'#FFFFFF',borderRadius:16,border:'1.5px solid #FFB74D',
+          overflow:'hidden',boxShadow:'0 2px 10px rgba(255,152,0,0.1)'}}>
+          <button onClick={()=>setShowDueRevs(v=>!v)}
+            style={{display:'flex',alignItems:'center',gap:10,width:'100%',
+              padding:'12px 16px',background:'none',border:'none',cursor:'pointer',textAlign:'left'}}>
+            <div style={{width:8,height:8,borderRadius:'50%',background:'#E65100',flexShrink:0}}/>
+            <span style={{flex:1,fontSize:13,fontWeight:800,color:'#E65100'}}>
+              {dueEntries.length} Revision{dueEntries.length>1?'s':''} Due
             </span>
-          </div>
-          {dueEntries.slice(0,4).map(entry=>{
-            const dueIntervals=REV_INTERVALS.filter(iv=>isRevDueToday(entry,iv)||isRevOverdue(entry,iv));
-            const isOver=dueIntervals.some(iv=>isRevOverdue(entry,iv));
-            const col=subjColor(entry.subject);
-            return(
-              <div key={entry.id} style={{background:'rgba(255,255,255,0.7)',
-                borderRadius:14,padding:'10px 12px',marginBottom:7,
-                border:`1px solid ${isOver?'#EF9A9A':'#FFB74D'}`}}>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                  <span style={{fontSize:11,fontWeight:900,color:col,
-                    background:col+'22',borderRadius:8,padding:'2px 7px'}}>{entry.subject}</span>
-                  {entry.topic&&<span style={{fontSize:11,color:TM}}>{entry.topic}</span>}
-                  {isOver&&<Chip label="OVERDUE" color='#C62828' small/>}
-                  <span style={{fontSize:10,color:TS,marginLeft:'auto'}}>{fmtDate(entry.dateStudied)}</span>
+            <Ico d={showDueRevs?IC.up:IC.down} s={14} c='#E65100'/>
+          </button>
+          {showDueRevs&&(
+            <div style={{padding:'0 14px 12px',display:'flex',flexDirection:'column',gap:7}}>
+              {dueEntries.slice(0,4).map(entry=>{
+                const dueIntervals=REV_INTERVALS.filter(iv=>isRevDueToday(entry,iv)||isRevOverdue(entry,iv));
+                const isOver=dueIntervals.some(iv=>isRevOverdue(entry,iv));
+                const col=subjColor(entry.subject);
+                return(
+                  <div key={entry.id} style={{background:isOver?'#FFF5F5':'#FFFBF3',
+                    borderRadius:12,padding:'10px 12px',
+                    border:`1px solid ${isOver?'#FFCDD2':'#FFE0B2'}`}}>
+                    <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:7}}>
+                      <span style={{fontSize:11,fontWeight:800,color:col,
+                        background:col+'18',borderRadius:7,padding:'2px 8px'}}>{entry.subject}</span>
+                      {entry.topic&&<span style={{fontSize:11,color:TM,flex:1,overflow:'hidden',
+                        textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{entry.topic}</span>}
+                      {isOver&&<Chip label="OVERDUE" color='#C62828' small/>}
+                      <span style={{fontSize:10,color:TS,marginLeft:'auto',flexShrink:0}}>{fmtDate(entry.dateStudied)}</span>
+                    </div>
+                    <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                      {dueIntervals.map(iv=>(
+                        <button key={iv} onClick={()=>onRevToggle(entry.id,iv)}
+                          style={{padding:'5px 10px',borderRadius:9,
+                            border:`1.5px solid ${entry.reviews[String(iv)]===true?'#43A047':'#FFB74D'}`,
+                            background:entry.reviews[String(iv)]===true?'#E8F5E9':'#FFF',
+                            color:entry.reviews[String(iv)]===true?'#2E7D32':'#E65100',
+                            fontSize:11,fontWeight:700,cursor:'pointer',
+                            fontFamily:'Nunito,sans-serif',transition:'all 0.15s'}}>
+                          {entry.reviews[String(iv)]===true?'✓ ':''}{REV_LABELS[iv]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {dueEntries.length>4&&(
+                <div style={{fontSize:11,color:'#E65100',fontWeight:600,paddingLeft:2}}>
+                  +{dueEntries.length-4} more → Revise tab
                 </div>
-                <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                  {dueIntervals.map(iv=>(
-                    <button key={iv} onClick={()=>onRevToggle(entry.id,iv)}
-                      style={{padding:'5px 10px',borderRadius:10,
-                        border:`2px solid ${entry.reviews[String(iv)]===true?'#43A047':'#FFB74D'}`,
-                        background:entry.reviews[String(iv)]===true?'#E8F5E9':'#FFF',
-                        color:entry.reviews[String(iv)]===true?'#2E7D32':'#E65100',
-                        fontSize:11,fontWeight:700,cursor:'pointer',
-                        fontFamily:'Nunito,sans-serif',transition:'all 0.15s'}}>
-                      {entry.reviews[String(iv)]===true?'✓ ':''}{REV_LABELS[iv]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          {dueEntries.length>4&&(
-            <div style={{fontSize:11,color:'#E65100',fontWeight:600,marginTop:4,paddingLeft:4}}>
-              +{dueEntries.length-4} more — check Revision tab
+              )}
             </div>
           )}
         </div>
       )}
 
-      {/* Habit list */}
-      <SH ch="Today's Habits — tap to check off"/>
-      {daily.map((h,i)=>{
-        const done=!!(logs[TK]||{})[i];
-        const st=getStreak(logs,i);
-        const col=hc(i);
-        return(
-          <button key={i} className="hbtn" onClick={()=>toggleToday(i)}
-            style={{display:'flex',alignItems:'center',gap:12,width:'100%',
-              background:done?col.bg:SUR,
-              border:`2px solid ${done?col.f:OL}`,
-              borderRadius:18,padding:'11px 14px',marginBottom:7,
-              textAlign:'left',cursor:'pointer',transition:'all 0.15s',
-              boxShadow:done?`0 2px 12px ${col.f}22`:'0 1px 4px rgba(103,80,164,0.07)'}}>
-            <div style={{width:26,height:26,borderRadius:9,flexShrink:0,
-              background:done?col.f:OL,
-              display:'flex',alignItems:'center',justifyContent:'center',
-              transition:'all 0.15s'}}>
-              {done&&<Ico d={IC.check} s={14} c='#FFF' sw={3}/>}
-            </div>
-            <span style={{flex:1,fontSize:14,fontWeight:done?600:700,
-              color:done?col.dk:TX,textDecoration:done?'line-through':'none',lineHeight:1.3}}>
-              {h}
-            </span>
-            {st>=3&&<span style={{fontSize:11,fontWeight:800,color:col.f,
-              background:col.lt,border:`1px solid ${col.f}44`,
-              padding:'2px 8px',borderRadius:10,flexShrink:0}}>🔥{st}</span>}
-          </button>
-        );
-      })}
-      {!daily.length&&(
-        <div style={{textAlign:'center',padding:'30px 20px',color:TS}}>
-          <div style={{fontSize:36,marginBottom:8}}>🎯</div>
-          <div style={{fontSize:14,fontWeight:700}}>No habits yet. Go to Settings tab to add!</div>
+      {/* ── HABITS CARD ── */}
+      <div style={{background:'#FFFFFF',borderRadius:16,border:'1px solid #EDE8FB',
+        boxShadow:'0 1px 6px rgba(103,80,164,0.06)',overflow:'hidden'}}>
+        <div style={{padding:'12px 16px 8px',display:'flex',alignItems:'center',
+          justifyContent:'space-between',borderBottom:'1px solid #F0EAFE'}}>
+          <span style={{fontSize:10,fontWeight:800,color:'#9E94C0',letterSpacing:1.2,textTransform:'uppercase'}}>
+            Today's Habits
+          </span>
+          <span style={{fontSize:11,fontWeight:700,color:P}}>{todayDone}/{daily.length} done</span>
         </div>
-      )}
-
-      {/* 7-day chart */}
-      <div style={{background:SUR,borderRadius:22,padding:'15px',
-        border:`1px solid ${OL}`,marginTop:6,marginBottom:14,
-        boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
-        <SH ch="Last 7 Days — Habit Completion"/>
-        <div style={{display:'flex',gap:5,height:86,alignItems:'flex-end',marginTop:8}}>
-          {chart7.map((d,i)=>(
-            <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
-              <div style={{fontSize:9,fontWeight:700,color:d.isToday?P:TS}}>{d.pct}%</div>
-              <div style={{width:'100%',borderRadius:'5px 5px 0 0',
-                height:`${Math.max(4,d.pct)}%`,minHeight:4,
-                background:d.isToday?`linear-gradient(0deg,${P},#B388FF)`:'#E4DAFB',
-                boxShadow:d.isToday?`0 2px 8px ${P}44`:undefined,
-                transition:'height 0.4s'}}/>
-              <div style={{fontSize:9,fontWeight:d.isToday?800:500,
-                color:d.isToday?P:TS}}>{d.day}</div>
-            </div>
-          ))}
-        </div>
+        {daily.length===0&&(
+          <div style={{textAlign:'center',padding:'28px 20px',color:TS}}>
+            <div style={{fontSize:32,marginBottom:6}}>🎯</div>
+            <div style={{fontSize:13,fontWeight:700}}>No habits yet — add in Settings tab</div>
+          </div>
+        )}
+        {daily.map((h,i)=>{
+          const done=!!(logs[TK]||{})[i];
+          const st=getStreak(logs,i);
+          const col=hc(i);
+          return(
+            <button key={i} className="hbtn" onClick={()=>toggleToday(i)}
+              style={{display:'flex',alignItems:'center',gap:11,width:'100%',
+                padding:'10px 16px',
+                background:done?col.bg+'88':'transparent',
+                border:'none',borderBottom:`1px solid ${done?col.f+'22':'#F6F0FF'}`,
+                textAlign:'left',cursor:'pointer',transition:'background 0.12s'}}>
+              <div style={{width:22,height:22,borderRadius:7,flexShrink:0,
+                background:done?col.f:'#EDE8FB',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                transition:'all 0.15s'}}>
+                {done&&<Ico d={IC.check} s={12} c='#FFF' sw={3}/>}
+              </div>
+              <span style={{flex:1,fontSize:13,fontWeight:done?600:700,
+                color:done?col.dk:TX,
+                textDecoration:done?'line-through':'none',lineHeight:1.35}}>
+                {h}
+              </span>
+              {st>=3&&<span style={{fontSize:10,fontWeight:800,color:col.f,
+                background:col.bg,border:`1px solid ${col.f}44`,
+                padding:'2px 7px',borderRadius:8,flexShrink:0}}>🔥{st}</span>}
+            </button>
+          );
+        })}
       </div>
 
-      {/* XP Mini-Card */}
-      <div style={{background:'linear-gradient(135deg,#6750A4,#9C68FF)',
-        borderRadius:18,padding:'12px 16px',marginBottom:12,
-        display:'flex',alignItems:'center',gap:12,
-        boxShadow:'0 4px 16px rgba(103,80,164,0.25)'}}>
-        <div style={{flex:1,color:'#FFF'}}>
-          <div style={{fontSize:10,opacity:0.75,letterSpacing:1,fontWeight:700}}>
-            {getLevelName(xp)} · Level {getLevel(xp)}
+      {/* ── 7-DAY CHART (collapsible) ── */}
+      <div style={{background:'#FFFFFF',borderRadius:16,border:'1px solid #EDE8FB',
+        overflow:'hidden',boxShadow:'0 1px 6px rgba(103,80,164,0.06)'}}>
+        <button onClick={()=>setShowChart(v=>!v)}
+          style={{display:'flex',alignItems:'center',gap:10,width:'100%',
+            padding:'12px 16px',background:'none',border:'none',cursor:'pointer',textAlign:'left'}}>
+          <span style={{flex:1,fontSize:10,fontWeight:800,color:'#9E94C0',letterSpacing:1.2,
+            textTransform:'uppercase'}}>7-Day History</span>
+          <div style={{display:'flex',gap:3,alignItems:'flex-end',height:16}}>
+            {chart7.map((d,i)=>(
+              <div key={i} style={{width:6,borderRadius:'2px 2px 0 0',
+                height:`${Math.max(20,d.pct)/100*16}px`,
+                background:d.isToday?P:'#D4C9F5'}}/>
+            ))}
           </div>
-          <div style={{fontSize:11,fontWeight:700,opacity:0.85,marginTop:1}}>
-            {xp} XP · {badges.length}/{ALL_BADGES.length} badges
+          <Ico d={showChart?IC.up:IC.down} s={13} c='#9E94C0'/>
+        </button>
+        {showChart&&(
+          <div style={{padding:'4px 16px 14px'}}>
+            <div style={{display:'flex',gap:5,height:80,alignItems:'flex-end'}}>
+              {chart7.map((d,i)=>(
+                <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+                  <div style={{fontSize:9,fontWeight:700,color:d.isToday?P:TS}}>{d.pct}%</div>
+                  <div style={{width:'100%',borderRadius:'4px 4px 0 0',
+                    height:`${Math.max(4,d.pct)}%`,minHeight:4,
+                    background:d.isToday?`linear-gradient(0deg,${P},#A78BFA)`:'#E4DAFB',
+                    transition:'height 0.4s'}}/>
+                  <div style={{fontSize:9,fontWeight:d.isToday?800:500,
+                    color:d.isToday?P:TS}}>{d.day}</div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div style={{height:4,background:'rgba(255,255,255,0.2)',borderRadius:2,marginTop:6,overflow:'hidden'}}>
-            <div style={{height:'100%',width:`${getLevelProgress(xp)}%`,background:'rgba(255,255,255,0.85)',borderRadius:2}}/>
-          </div>
-        </div>
-        <div style={{color:'#FFF',fontSize:28}}>
-          {getLevel(xp)<=2?'🌱':getLevel(xp)<=4?'📖':getLevel(xp)<=6?'🎯':'🏆'}
-        </div>
+        )}
       </div>
 
-      {/* Suggestions */}
+      {/* ── SMART SUGGESTIONS (collapsible) ── */}
       <SuggestionsCard suggestions={suggestions}/>
+
     </div>
   );
 }
@@ -1557,7 +1745,8 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
   editId,setEditId,editTxt,setEditTxt,saveEdit,delConf,setDelConf,doDelete,
   moveH,pasteOpen,setPasteOpen,pasteTxt,setPasteTxt,doPasteRestore,
   doExport,doCopy,doFileRestore,fileRef,darkMode,setDarkMode,gateDate,setGateDate,
-  notifEnabled,setNotifEnabled,notifTime,setNotifTime}){
+  notifEnabled,setNotifEnabled,notifTime,setNotifTime,paletteId,setPaletteId,
+  setStudyHours,setPyqRecords,installApp,canInstall}){
   const [gateInput,setGateInput]=useState(gateDate);
   const [localNotifTime,setLocalNotifTime]=useState(notifTime);
 
@@ -1599,7 +1788,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
           </div>
           <button onClick={handleNotifToggle}
             style={{width:48,height:26,borderRadius:13,border:'none',cursor:'pointer',
-              background:notifEnabled?'#6750A4':'#E4DAFB',position:'relative',
+              background:notifEnabled?P:OL,position:'relative',
               transition:'background 0.2s',flexShrink:0}}>
             <div style={{width:20,height:20,borderRadius:'50%',background:'#FFF',
               position:'absolute',top:3,transition:'left 0.2s',
@@ -1615,7 +1804,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
                 fontSize:13,fontWeight:700,color:'#1C1B1F',background:'#F0EAFE',
                 outline:'none',fontFamily:'Nunito,sans-serif'}}/>
             <button onClick={handleNotifTimeChange}
-              style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',border:'none',
+              style={{background:`linear-gradient(90deg,${THEME.grad[0]},${THEME.grad[1]})`,border:'none',
                 borderRadius:10,padding:'8px 14px',color:'#FFF',fontWeight:800,
                 fontSize:12,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
               Set
@@ -1630,6 +1819,25 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
         )}
       </div>
 
+      {/* Install */}
+      <SH ch="App Install"/>
+      <div style={{background:'#FFFFFF',borderRadius:20,border:'1px solid #E4DAFB',
+        padding:16,marginBottom:14,boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:38,height:38,borderRadius:13,background:PC,
+            display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>📱</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:800,color:TX}}>Add to Home Screen</div>
+            <div style={{fontSize:11,color:TS,marginTop:2}}>Use HABITRA like a normal app</div>
+          </div>
+          <button onClick={installApp}
+            style={{border:'none',borderRadius:12,padding:'9px 13px',background:P,color:'#FFF',
+              fontSize:12,fontWeight:900,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+            Install
+          </button>
+        </div>
+      </div>
+
       {/* Appearance & GATE Date */}
       <SH ch="Appearance & GATE Settings"/>
       <div style={{background:'#FFFFFF',borderRadius:20,border:'1px solid #E4DAFB',
@@ -1642,13 +1850,30 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
           </div>
           <button onClick={()=>setDarkMode(v=>!v)}
             style={{width:48,height:26,borderRadius:13,border:'none',cursor:'pointer',
-              background:darkMode?'#6750A4':'#E4DAFB',position:'relative',transition:'background 0.2s',flexShrink:0}}>
+              background:darkMode?P:OL,position:'relative',transition:'background 0.2s',flexShrink:0}}>
             <div style={{width:20,height:20,borderRadius:'50%',background:'#FFF',
               position:'absolute',top:3,transition:'left 0.2s',
               left:darkMode?'25px':'3px',boxShadow:'0 1px 4px rgba(0,0,0,0.2)'}}/>
           </button>
         </div>
         <div>
+          <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>Colour Palette</div>
+          <div style={{fontSize:11,color:'#79747E',marginBottom:9}}>Choose a multi-colour look for the whole app</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+            {Object.entries(PALETTES).map(([id,pal])=>(
+              <button key={id} onClick={()=>setPaletteId(id)}
+                style={{border:`2px solid ${paletteId===id?pal.p:OL}`,borderRadius:14,
+                  background:paletteId===id?pal.pc:'#FFF',padding:'10px 11px',textAlign:'left',
+                  cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+                <div style={{display:'flex',gap:4,marginBottom:7}}>
+                  {pal.grad.map(c=><span key={c} style={{width:18,height:18,borderRadius:7,background:c,display:'block'}}/>)}
+                </div>
+                <div style={{fontSize:12,fontWeight:900,color:paletteId===id?pal.p:TX}}>{pal.name}</div>
+                <div style={{fontSize:10,color:TS,fontWeight:600}}>{pal.desc}</div>
+              </button>
+            ))}
+          </div>
+          <div style={{height:1,background:'#E4DAFB',margin:'0 0 12px'}}/>
           <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>🎯 GATE Exam Date</div>
           <div style={{fontSize:11,color:'#79747E',marginBottom:8}}>Used for the countdown on the Today screen</div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -1657,7 +1882,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
                 fontSize:13,fontWeight:700,color:'#1C1B1F',background:'#F0EAFE',outline:'none',
                 fontFamily:'Nunito,sans-serif'}}/>
             <button onClick={()=>setGateDate(gateInput)}
-              style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',border:'none',
+              style={{background:`linear-gradient(90deg,${THEME.grad[0]},${THEME.grad[1]})`,border:'none',
                 borderRadius:12,padding:'10px 16px',color:'#FFF',fontWeight:800,
                 fontSize:13,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
               Set
@@ -1803,6 +2028,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
             const d=freshData();
             setDaily(d.daily);setWeekly(d.weekly);
             setLogs(d.logs);setWlogs(d.wlogs);setRevEntries(d.revEntries);
+            setStudyHours({});setPyqRecords([]);
           }
         }} style={{display:'flex',alignItems:'center',gap:9,background:'#FFCDD2',
           border:'2px solid #EF9A9A',borderRadius:14,padding:'12px 16px',cursor:'pointer',
@@ -1952,6 +2178,586 @@ function WeeklyView({weekly,wlogs,CWK,toggleWeekly}){
 /* ═══════════════════════════════════════════════════
    MAIN APP
    ═══════════════════════════════════════════════════ */
+/* ═════════════════════════════════════════════════════
+   POWER CENTER COMPONENTS
+   ═════════════════════════════════════════════════════ */
+const Panel=({children,style={}})=>(
+  <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:18,
+    padding:14,boxShadow:'0 1px 7px rgba(40,40,70,0.06)',...style}}>
+    {children}
+  </div>
+);
+const MiniStat=({label,value,tone=P})=>(
+  <div style={{background:SV,border:`1px solid ${OL}`,borderRadius:14,padding:'10px 11px'}}>
+    <div style={{fontSize:10,fontWeight:800,color:TS,textTransform:'uppercase',letterSpacing:0.8}}>{label}</div>
+    <div style={{fontSize:18,fontWeight:900,color:tone,lineHeight:1.15,marginTop:2}}>{value}</div>
+  </div>
+);
+
+function RadarChart({rows}){
+  const data=(rows.length?rows:GATE_SUBJECTS.slice(0,6).map(s=>({subject:s,score:0}))).slice(0,6);
+  const size=236,c=size/2,max=82;
+  const pts=data.map((r,i)=>{
+    const a=-Math.PI/2+i*2*Math.PI/data.length;
+    const rad=max*(r.score/100);
+    return{x:c+Math.cos(a)*rad,y:c+Math.sin(a)*rad,label:r.subject,score:r.score,ax:c+Math.cos(a)*max,ay:c+Math.sin(a)*max};
+  });
+  const poly=pts.map(p=>`${p.x},${p.y}`).join(' ');
+  const rings=[0.25,0.5,0.75,1].map(k=>data.map((_,i)=>{
+    const a=-Math.PI/2+i*2*Math.PI/data.length;
+    return`${c+Math.cos(a)*max*k},${c+Math.sin(a)*max*k}`;
+  }).join(' '));
+  return(
+    <div style={{display:'flex',justifyContent:'center',overflow:'hidden'}}>
+      <svg width="100%" height={260} viewBox={`0 0 ${size} ${size+24}`} style={{maxWidth:330}}>
+        {rings.map((r,i)=><polygon key={i} points={r} fill="none" stroke={OL} strokeWidth="1"/>)}
+        {pts.map((p,i)=><line key={i} x1={c} y1={c} x2={p.ax} y2={p.ay} stroke={OL} strokeWidth="1"/>)}
+        <polygon points={poly} fill={P+'30'} stroke={P} strokeWidth="3" strokeLinejoin="round"/>
+        {pts.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="4" fill={P}/>)}
+        {pts.map((p,i)=>{
+          const dx=p.ax<c?-38:p.ax>c?8:-18;
+          const dy=p.ay<c?-8:p.ay>c?20:4;
+          return(
+            <g key={p.label}>
+              <text x={p.ax+dx} y={p.ay+dy} fontSize="10" fontWeight="800" fill={TX}>{p.label.slice(0,9)}</text>
+              <text x={p.ax+dx} y={p.ay+dy+12} fontSize="9" fontWeight="700" fill={TS}>{p.score}%</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function AiCoachPanel({apiKey,setApiKey,aiModel,setAiModel,daily,logs,TK,revEntries,readinessRows,pace,gateCountdown,studyHours,toast$}){
+  const [prompt,setPrompt]=useState('Make my best study plan for today.');
+  const [busy,setBusy]=useState(false);
+  const [messages,setMessages]=useState(()=>{try{return JSON.parse(localStorage.getItem('habitra_ai_chat')||'[]');}catch(e){return [];}});
+  useEffect(()=>{try{localStorage.setItem('habitra_ai_chat',JSON.stringify(messages.slice(-10)));}catch(e){}},[messages]);
+
+  const askClaude=async()=>{
+    const key=apiKey.trim();
+    const q=prompt.trim();
+    if(!key){toast$('Add your Claude API key first','warn');return;}
+    if(!q){toast$('Type a question for the coach','warn');return;}
+    const done=daily.filter((_,i)=>(logs[TK]||{})[i]).length;
+    const due=getTodayDueEntries(revEntries).slice(0,10).map(e=>`${e.subject}: ${e.topic||'revision'} (${fmtDate(e.dateStudied)})`);
+    const weak=readinessRows.slice().sort((a,b)=>a.score-b.score).slice(0,6)
+      .map(r=>`${r.subject} ${r.score}% ready, ${r.overdue} overdue, ${r.solvedPyq} PYQ solved`);
+    const context=[
+      `GATE days left: ${gateCountdown}`,
+      `Today habits: ${done}/${daily.length}`,
+      `Study hours today: ${studyHours[TK]||0}`,
+      `Pace status: ${pace.status}; pending revisions ${pace.pending}; overdue ${pace.overdue}`,
+      `Due revisions: ${due.join('; ')||'none'}`,
+      `Weak subjects: ${weak.join('; ')||'not enough data'}`
+    ].join('\n');
+    setBusy(true);
+    try{
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'content-type':'application/json',
+          'x-api-key':key,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body:JSON.stringify({
+          model:aiModel||'claude-sonnet-4-20250514',
+          max_tokens:850,
+          system:'You are a concise GATE Civil study coach. Give direct, practical plans. Use the data, avoid generic motivation, and keep the answer under 180 words unless asked.',
+          messages:[
+            ...messages.slice(-6).map(m=>({role:m.role,content:m.content})),
+            {role:'user',content:`${q}\n\nMy HABITRA data:\n${context}`}
+          ]
+        })
+      });
+      const data=await res.json();
+      if(!res.ok)throw new Error(data.error?.message||'Claude API request failed');
+      const ans=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+      setMessages(m=>[...m,{role:'user',content:q},{role:'assistant',content:ans||'No text response received.'}].slice(-12));
+      setPrompt('');
+      buzz([20,20,20]);
+    }catch(e){
+      toast$(e.message||'AI coach failed','err');
+    }finally{setBusy(false);}
+  };
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      <Panel>
+        <label style={LBL}>Claude API key</label>
+        <input type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)}
+          placeholder="sk-ant-..." style={{...INPS,background:SV,marginBottom:9}}/>
+        <label style={LBL}>Model ID</label>
+        <input value={aiModel} onChange={e=>setAiModel(e.target.value)}
+          placeholder="claude-sonnet-4-20250514" style={{...INPS,background:SV}}/>
+      </Panel>
+      <Panel>
+        <textarea value={prompt} onChange={e=>setPrompt(e.target.value)}
+          placeholder="Ask: what should I study in 3 hours today?"
+          style={{width:'100%',minHeight:82,border:`2px solid ${OL}`,borderRadius:14,
+            padding:12,resize:'vertical',fontSize:13,fontWeight:600,color:TX,background:SV,
+            fontFamily:'Nunito,sans-serif',outline:'none'}}/>
+        <button onClick={askClaude} disabled={busy}
+          style={{marginTop:9,width:'100%',border:'none',borderRadius:14,padding:'12px 14px',
+            background:`linear-gradient(90deg,${THEME.grad[0]},${THEME.grad[1]})`,
+            color:'#FFF',fontSize:13,fontWeight:900,cursor:busy?'default':'pointer',
+            opacity:busy?0.65:1,fontFamily:'Nunito,sans-serif'}}>
+          {busy?'Thinking...':'Ask Study Coach'}
+        </button>
+      </Panel>
+      {messages.length>0&&(
+        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+          {messages.slice(-6).map((m,i)=>(
+            <div key={i} style={{alignSelf:m.role==='user'?'flex-end':'stretch',
+              maxWidth:m.role==='user'?'88%':'100%',background:m.role==='user'?PC:SUR,
+              border:`1px solid ${m.role==='user'?P+'35':OL}`,borderRadius:16,
+              padding:'10px 12px',whiteSpace:'pre-wrap',fontSize:12,lineHeight:1.55,
+              color:m.role==='user'?P:TX,fontWeight:m.role==='user'?800:600}}>
+              {m.content}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnalyticsPanel({readinessRows,rank,pace}){
+  const weak=readinessRows.slice().sort((a,b)=>a.score-b.score).slice(0,4);
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      <Panel style={{paddingBottom:8}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
+          <MiniStat label="Readiness" value={`${rank.preparedness}%`} tone={rank.tone}/>
+          <MiniStat label="Rank range" value={rank.range} tone={rank.tone}/>
+          <MiniStat label="Pace" value={pace.status} tone={pace.tone}/>
+          <MiniStat label="Overdue" value={pace.overdue} tone={pace.overdue?pace.tone:THEME.good}/>
+        </div>
+        <RadarChart rows={readinessRows}/>
+        <div style={{fontSize:11,color:TS,lineHeight:1.45,marginTop:-8}}>
+          Estimate confidence: {rank.confidence}. This is a planning signal, not an official prediction.
+        </div>
+      </Panel>
+      <Panel>
+        <div style={{fontSize:13,fontWeight:900,color:pace.tone,marginBottom:5}}>{pace.status}</div>
+        <div style={{fontSize:12,color:TM,lineHeight:1.5}}>{pace.message}</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:7,marginTop:10}}>
+          <MiniStat label="Pending" value={pace.pending}/>
+          <MiniStat label="Need/day" value={pace.neededPerDay}/>
+          <MiniStat label="Avg hr/day" value={pace.weeklyAvg}/>
+        </div>
+      </Panel>
+      <Panel>
+        <div style={{fontSize:13,fontWeight:900,color:TX,marginBottom:10}}>Weakest subjects</div>
+        {weak.map(r=>(
+          <div key={r.subject} style={{display:'flex',alignItems:'center',gap:9,marginBottom:9}}>
+            <div style={{width:34,fontSize:11,fontWeight:900,color:subjColor(r.subject)}}>{r.subject.slice(0,4)}</div>
+            <div style={{flex:1,height:8,borderRadius:8,background:SV,overflow:'hidden'}}>
+              <div style={{height:'100%',width:`${r.score}%`,background:subjColor(r.subject),borderRadius:8}}/>
+            </div>
+            <div style={{width:36,textAlign:'right',fontSize:11,fontWeight:900,color:TX}}>{r.score}%</div>
+          </div>
+        ))}
+      </Panel>
+    </div>
+  );
+}
+
+function PYQTracker({pyqRecords,setPyqRecords,toast$}){
+  const [form,setForm]=useState({subject:'SOM',topic:'',year:new Date().getFullYear(),notes:''});
+  const add=()=>{
+    if(!form.subject.trim()||!form.topic.trim()){toast$('Add subject and topic','warn');return;}
+    setPyqRecords(p=>[{id:uid(),...form,year:String(form.year||''),solved:false,createdAt:new Date().toISOString()},...p]);
+    setForm({...form,topic:'',notes:''});
+    toast$('PYQ added');
+  };
+  const solved=pyqRecords.filter(p=>p.solved).length;
+  const bySubject=GATE_SUBJECTS.map(s=>({s,total:pyqRecords.filter(p=>p.subject===s).length,done:pyqRecords.filter(p=>p.subject===s&&p.solved).length})).filter(x=>x.total);
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      <Panel>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
+          <MiniStat label="Solved" value={`${solved}/${pyqRecords.length}`} tone={THEME.good}/>
+          <MiniStat label="Subjects" value={bySubject.length}/>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+          <select value={form.subject} onChange={e=>setForm({...form,subject:e.target.value})} style={INPS}>
+            {GATE_SUBJECTS.map(s=><option key={s}>{s}</option>)}
+          </select>
+          <input value={form.year} onChange={e=>setForm({...form,year:e.target.value})}
+            placeholder="Year" style={INPS}/>
+          <input value={form.topic} onChange={e=>setForm({...form,topic:e.target.value})}
+            placeholder="Topic / chapter" style={{...INPS,gridColumn:'1 / -1'}}/>
+          <input value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}
+            placeholder="Short note (optional)" style={{...INPS,gridColumn:'1 / -1'}}/>
+        </div>
+        <button onClick={add} style={{marginTop:9,width:'100%',border:'none',borderRadius:14,
+          padding:12,background:P,color:'#FFF',fontWeight:900,fontSize:13,cursor:'pointer',
+          fontFamily:'Nunito,sans-serif'}}>Add PYQ</button>
+      </Panel>
+      {bySubject.length>0&&(
+        <Panel>
+          <div style={{fontSize:13,fontWeight:900,color:TX,marginBottom:10}}>Subject progress</div>
+          {bySubject.map(x=>(
+            <div key={x.s} style={{display:'flex',gap:8,alignItems:'center',marginBottom:8}}>
+              <span style={{width:74,fontSize:11,fontWeight:900,color:subjColor(x.s)}}>{x.s}</span>
+              <div style={{flex:1,height:8,borderRadius:8,background:SV,overflow:'hidden'}}>
+                <div style={{height:'100%',width:`${x.total?x.done/x.total*100:0}%`,background:subjColor(x.s)}}/>
+              </div>
+              <span style={{fontSize:11,fontWeight:800,color:TM}}>{x.done}/{x.total}</span>
+            </div>
+          ))}
+        </Panel>
+      )}
+      <div style={{display:'flex',flexDirection:'column',gap:7}}>
+        {pyqRecords.map(p=>(
+          <div key={p.id} style={{background:SUR,border:`1px solid ${p.solved?THEME.good+'55':OL}`,
+            borderRadius:15,padding:11,display:'flex',alignItems:'center',gap:9}}>
+            <button onClick={()=>setPyqRecords(list=>list.map(x=>x.id===p.id?{...x,solved:!x.solved}:x))}
+              style={{width:28,height:28,borderRadius:9,border:'none',background:p.solved?THEME.good:SV,
+                display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+              {p.solved&&<Ico d={IC.check} s={14} c="#FFF" sw={3}/>}
+            </button>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:800,color:TX,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.topic}</div>
+              <div style={{fontSize:10,color:TS,fontWeight:700}}>{p.subject} · {p.year||'year'} {p.notes?`· ${p.notes}`:''}</div>
+            </div>
+            <button onClick={()=>setPyqRecords(list=>list.filter(x=>x.id!==p.id))}
+              style={{border:'none',background:'#FFEBEE',color:'#C62828',borderRadius:9,padding:'6px 8px',cursor:'pointer'}}>
+              <Ico d={IC.trash} s={13} c="#C62828"/>
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+
+function ShareCardPanel({todayPct,todayDone,daily,bestStr,avg30,xp,badges,gateCountdown,toast$}){
+  const makeCard=()=>{
+    const canvas=document.createElement('canvas');
+    canvas.width=900;canvas.height=1200;
+    const ctx=canvas.getContext('2d');
+    const g=ctx.createLinearGradient(0,0,900,1200);
+    g.addColorStop(0,THEME.grad[0]);g.addColorStop(0.55,THEME.grad[1]);g.addColorStop(1,THEME.grad[2]);
+    ctx.fillStyle=g;ctx.fillRect(0,0,900,1200);
+    ctx.fillStyle='rgba(255,255,255,0.16)';
+    for(let i=0;i<8;i++){ctx.beginPath();ctx.arc(120+i*110,160+i*90,90,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='#FFFFFF';ctx.font='900 76px Nunito, Arial';ctx.fillText('HABITRA',80,150);
+    ctx.font='700 28px Nunito, Arial';ctx.fillText(new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'}),84,198);
+    ctx.fillStyle='rgba(255,255,255,0.92)';roundRect(ctx,70,260,760,720,42);ctx.fill();
+    ctx.fillStyle=TX;ctx.font='900 48px Nunito, Arial';ctx.fillText(`${todayPct}% Today`,118,350);
+    ctx.font='700 30px Nunito, Arial';ctx.fillStyle='#49454F';ctx.fillText(`${todayDone}/${daily.length} habits completed`,118,397);
+    const stats=[['Best streak',`${bestStr} days`],['30-day average',`${avg30}%`],['XP',String(xp)],['Badges',`${badges.length}/${ALL_BADGES.length}`],['GATE countdown',`${gateCountdown} days`]];
+    stats.forEach((s,i)=>{
+      const y=490+i*82;
+      ctx.fillStyle=THEME.pc;roundRect(ctx,118,y-40,664,58,20);ctx.fill();
+      ctx.fillStyle=P;ctx.font='800 24px Nunito, Arial';ctx.fillText(s[0],146,y-3);
+      ctx.fillStyle=TX;ctx.font='900 30px Nunito, Arial';ctx.textAlign='right';ctx.fillText(s[1],750,y-4);ctx.textAlign='left';
+    });
+    ctx.fillStyle='rgba(255,255,255,0.88)';ctx.font='800 24px Nunito, Arial';ctx.fillText('Built for GATE consistency',80,1070);
+    ctx.font='600 20px Nunito, Arial';ctx.fillText('Shared from my personal tracker',80,1105);
+    canvas.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='habitra-streak-card.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+      toast$('Share card downloaded');
+    });
+  };
+  return(
+    <Panel>
+      <div style={{fontSize:18,fontWeight:900,color:TX,marginBottom:5}}>Streak share card</div>
+      <div style={{fontSize:12,color:TM,lineHeight:1.5,marginBottom:12}}>
+        Generates a clean PNG with today progress, streak, XP and GATE countdown.
+      </div>
+      <button onClick={makeCard} style={{width:'100%',border:'none',borderRadius:14,padding:13,
+        background:`linear-gradient(90deg,${THEME.grad[0]},${THEME.grad[2]})`,color:'#FFF',
+        fontWeight:900,fontSize:13,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+        Generate Image
+      </button>
+    </Panel>
+  );
+}
+
+function PartnerPanel({partner,setPartner,todayPct,bestStr,dueRevCount,xp,toast$}){
+  const publish=async()=>{
+    const code=(partner.myCode||'harsh').trim().replace(/[^a-z0-9_-]/gi,'').slice(0,30)||'harsh';
+    const snapshot={code,todayPct,bestStr,dueRevCount,xp,level:getLevel(xp),at:new Date().toISOString()};
+    try{
+      if(!window.__FB_SET_DOC__)throw new Error('Firebase is offline');
+      await window.__FB_SET_DOC__('habitraPartners',code,snapshot);
+      setPartner(p=>({...p,myCode:code,lastShared:snapshot}));
+      toast$('Partner snapshot published');
+    }catch(e){toast$('Partner publish needs Firestore rule access','warn');}
+  };
+  const load=async()=>{
+    const code=(partner.friendCode||'').trim();
+    if(!code){toast$('Enter friend code','warn');return;}
+    try{
+      if(!window.__FB_GET_DOC__)throw new Error('Firebase is offline');
+      const d=await window.__FB_GET_DOC__('habitraPartners',code);
+      if(!d){toast$('No partner snapshot found','warn');return;}
+      setPartner(p=>({...p,friend:d}));
+      toast$('Partner loaded');
+    }catch(e){toast$('Could not read partner snapshot','warn');}
+  };
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      <Panel>
+        <label style={LBL}>Your share code</label>
+        <input value={partner.myCode||'harsh'} onChange={e=>setPartner(p=>({...p,myCode:e.target.value}))}
+          style={{...INPS,background:SV,marginBottom:9}}/>
+        <button onClick={publish} style={{width:'100%',border:'none',borderRadius:14,padding:12,
+          background:P,color:'#FFF',fontWeight:900,fontSize:13,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+          Publish My Read-Only Snapshot
+        </button>
+      </Panel>
+      <Panel>
+        <label style={LBL}>Friend code</label>
+        <div style={{display:'flex',gap:8}}>
+          <input value={partner.friendCode||''} onChange={e=>setPartner(p=>({...p,friendCode:e.target.value}))}
+            placeholder="friend-code" style={{...INPS,background:SV,flex:1}}/>
+          <button onClick={load} style={{border:'none',borderRadius:12,padding:'0 14px',
+            background:PC,color:P,fontWeight:900,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>Load</button>
+        </div>
+      </Panel>
+      {partner.friend&&(
+        <Panel>
+          <div style={{fontSize:13,fontWeight:900,color:TX,marginBottom:9}}>Partner snapshot</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <MiniStat label="Today" value={`${partner.friend.todayPct||0}%`}/>
+            <MiniStat label="Streak" value={`${partner.friend.bestStr||0}d`} tone={THEME.good}/>
+            <MiniStat label="Due rev" value={partner.friend.dueRevCount||0} tone={THEME.warn}/>
+            <MiniStat label="Level" value={`Lv${partner.friend.level||0}`}/>
+          </div>
+          <div style={{fontSize:10,color:TS,marginTop:9}}>
+            Updated {partner.friend.at?new Date(partner.friend.at).toLocaleString('en-IN'):'recently'}
+          </div>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+function PomodoroPanel({pomo,setPomo}){
+  const mins=String(Math.floor(pomo.seconds/60)).padStart(2,'0');
+  const secs=String(pomo.seconds%60).padStart(2,'0');
+  const setMode=mode=>setPomo(p=>({...p,mode,seconds:POMO_SECONDS[mode],running:false}));
+  return(
+    <Panel style={{textAlign:'center'}}>
+      <div style={{display:'flex',gap:7,justifyContent:'center',marginBottom:12}}>
+        {['focus','short','long'].map(m=>(
+          <button key={m} onClick={()=>setMode(m)}
+            style={{border:`1px solid ${pomo.mode===m?P:OL}`,background:pomo.mode===m?PC:SV,
+              color:pomo.mode===m?P:TM,borderRadius:12,padding:'7px 10px',
+              fontSize:11,fontWeight:900,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+            {m==='focus'?'25 Focus':m==='short'?'5 Break':'15 Break'}
+          </button>
+        ))}
+      </div>
+      <div style={{fontSize:58,fontWeight:900,color:P,letterSpacing:0,lineHeight:1}}>{mins}:{secs}</div>
+      <div style={{fontSize:11,color:TS,fontWeight:700,margin:'6px 0 14px'}}>Completed focus sessions: {pomo.sessions||0}</div>
+      <div style={{display:'flex',gap:9}}>
+        <button onClick={()=>setPomo(p=>({...p,running:!p.running}))}
+          style={{flex:1,border:'none',borderRadius:14,padding:13,background:P,color:'#FFF',
+            fontWeight:900,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+          {pomo.running?'Pause':'Start'}
+        </button>
+        <button onClick={()=>setPomo(p=>({...p,running:false,seconds:POMO_SECONDS[p.mode]}))}
+          style={{flex:1,border:`1px solid ${OL}`,borderRadius:14,padding:13,background:SV,color:TM,
+            fontWeight:900,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+          Reset
+        </button>
+      </div>
+    </Panel>
+  );
+}
+
+function RevisionCalendarPanel({revEntries}){
+  const [date,setDate]=useState(()=>new Date());
+  const y=date.getFullYear(),m=date.getMonth();
+  const dim=daysIn(y,m);
+  const first=new Date(y,m,1).getDay();
+  const events=useMemo(()=>{
+    const map={};
+    revEntries.forEach(e=>REV_INTERVALS.forEach(iv=>{
+      if(e.reviews[String(iv)]===null){
+        const day=getRevDate(e,iv);
+        if(!map[day])map[day]=[];
+        map[day].push({subject:e.subject,label:REV_LABELS[iv],over:day<todayStr()});
+      }
+    }));
+    return map;
+  },[revEntries]);
+  const cells=[];
+  for(let i=0;i<first;i++)cells.push(null);
+  for(let d=1;d<=dim;d++)cells.push(d);
+  return(
+    <Panel>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+        <button onClick={()=>setDate(new Date(y,m-1,1))} style={{border:'none',background:SV,borderRadius:10,padding:'7px 10px',color:P,fontWeight:900}}>‹</button>
+        <div style={{fontSize:15,fontWeight:900,color:TX}}>{MONTHS[m]} {y}</div>
+        <button onClick={()=>setDate(new Date(y,m+1,1))} style={{border:'none',background:SV,borderRadius:10,padding:'7px 10px',color:P,fontWeight:900}}>›</button>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:5}}>
+        {WD.map(w=><div key={w} style={{fontSize:9,fontWeight:900,color:TS,textAlign:'center'}}>{w}</div>)}
+        {cells.map((d,i)=>{
+          const k=d?dk(y,m,d):null;
+          const ev=k?events[k]||[]:[];
+          const today=k===todayStr();
+          return(
+            <div key={i} style={{minHeight:48,borderRadius:12,background:d?(today?PC:SV):'transparent',
+              border:d?`1px solid ${today?P:OL}`:'none',padding:5}}>
+              {d&&<div style={{fontSize:10,fontWeight:900,color:today?P:TX}}>{d}</div>}
+              <div style={{display:'flex',gap:2,flexWrap:'wrap',marginTop:4}}>
+                {ev.slice(0,5).map((e,idx)=><span key={idx} title={`${e.subject} ${e.label}`}
+                  style={{width:6,height:6,borderRadius:'50%',background:e.over?'#C62828':subjColor(e.subject)}}/>)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+function SchedulePanel({schedule,maxPerDay,setMaxPerDay}){
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      <Panel>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:900,color:TX}}>Smart schedule</div>
+            <div style={{fontSize:11,color:TS}}>Auto-balances overdue revision, unsolved PYQ and weak subjects.</div>
+          </div>
+          <input type="number" min="1" max="8" value={maxPerDay}
+            onChange={e=>setMaxPerDay(clamp(parseInt(e.target.value||'1',10),1,8))}
+            style={{width:54,border:`2px solid ${OL}`,borderRadius:11,padding:8,
+              fontWeight:900,color:P,textAlign:'center',background:SV}}/>
+        </div>
+      </Panel>
+      {schedule.map(day=>(
+        <div key={day.date} style={{background:SUR,border:`1px solid ${OL}`,borderRadius:16,padding:12}}>
+          <div style={{fontSize:12,fontWeight:900,color:P,marginBottom:8}}>{fmtDate(day.date)}</div>
+          {day.tasks.length?day.tasks.map((t,i)=>(
+            <div key={i} style={{display:'flex',gap:8,alignItems:'center',marginBottom:6}}>
+              <span style={{fontSize:10,fontWeight:900,color:subjColor(t.subject),background:subjColor(t.subject)+'18',
+                padding:'2px 7px',borderRadius:8}}>{t.subject}</span>
+              <span style={{fontSize:12,color:TX,fontWeight:700,flex:1}}>{t.type}: {t.topic}</span>
+              <span style={{fontSize:10,color:TS,fontWeight:700}}>{t.label}</span>
+            </div>
+          )):<div style={{fontSize:12,color:TS}}>Light day. Review notes or rest.</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FocusMode({daily,logs,TK,toggleToday,todayPct,gateCountdown,onClose}){
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:90,background:BG,padding:'22px 18px',
+      display:'flex',flexDirection:'column',overflowY:'auto'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:22}}>
+        <div>
+          <div style={{fontSize:24,fontWeight:900,color:P}}>Focus Mode</div>
+          <div style={{fontSize:12,color:TS,fontWeight:700}}>{todayPct}% today · {gateCountdown} days to GATE</div>
+        </div>
+        <button onClick={onClose} style={{border:'none',background:SV,borderRadius:14,padding:'10px 13px',
+          color:P,fontWeight:900,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>Exit</button>
+      </div>
+      <div style={{background:`linear-gradient(135deg,${THEME.hero[0]},${THEME.hero[1]})`,
+        color:'#FFF',borderRadius:24,padding:22,marginBottom:14}}>
+        <div style={{fontSize:64,fontWeight:900,lineHeight:1}}>{todayPct}%</div>
+        <div style={{fontSize:14,fontWeight:700,opacity:0.82}}>One clean screen. Finish the next checkbox.</div>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:9}}>
+        {daily.map((h,i)=>{
+          const done=!!(logs[TK]||{})[i];
+          return(
+            <button key={i} onClick={()=>toggleToday(i)}
+              style={{display:'flex',alignItems:'center',gap:12,border:`1px solid ${done?THEME.good+'55':OL}`,
+                background:done?'#E8F5E9':SUR,borderRadius:18,padding:15,textAlign:'left',
+                cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+              <div style={{width:26,height:26,borderRadius:9,background:done?THEME.good:SV,
+                display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {done&&<Ico d={IC.check} s={14} c="#FFF" sw={3}/>}
+              </div>
+              <span style={{fontSize:15,fontWeight:800,color:done?'#2E7D32':TX,
+                textDecoration:done?'line-through':'none'}}>{h}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PowerView({daily,logs,TK,toggleToday,revEntries,pyqRecords,setPyqRecords,
+  gateCountdown,avg30,totalHours,studyHours,todayPct,todayDone,
+  bestStr,dueRevCount,xp,badges,apiKey,setApiKey,aiModel,setAiModel,partner,setPartner,
+  pomo,setPomo,setShowFocus,toast$}){
+  const [tab,setTab]=useState('coach');
+  const [maxPerDay,setMaxPerDay]=useState(4);
+  const readinessRows=useMemo(()=>getSubjectReadinessRows({revEntries,pyqRecords}),[revEntries,pyqRecords]);
+  const rank=useMemo(()=>getRankEstimate({readinessRows,avg30,totalHours,gateCountdown}),[readinessRows,avg30,totalHours,gateCountdown]);
+  const pace=useMemo(()=>getPaceWarning({revEntries,gateCountdown,avg30,studyHours}),[revEntries,gateCountdown,avg30,studyHours]);
+  const schedule=useMemo(()=>buildSmartSchedule({revEntries,pyqRecords,readinessRows,days:14,maxPerDay}),[revEntries,pyqRecords,readinessRows,maxPerDay]);
+  const tabs=[
+    ['coach','Coach'],['analytics','Analytics'],['pyq','PYQ'],['timer','Timer'],
+    ['calendar','Calendar'],['plan','Plan'],['share','Share'],['partner','Partner']
+  ];
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:11}}>
+      <div style={{background:`linear-gradient(135deg,${THEME.hero[0]},${THEME.hero[1]})`,
+        borderRadius:22,padding:18,color:'#FFF',boxShadow:'0 8px 24px rgba(30,50,90,0.18)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:48,height:48,borderRadius:16,background:'rgba(255,255,255,0.18)',
+            display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>⚡</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:20,fontWeight:900}}>Power Center</div>
+            <div style={{fontSize:12,opacity:0.78}}>Advanced tools stay here, away from the Today screen.</div>
+          </div>
+          <button onClick={()=>setShowFocus(true)}
+            style={{border:'1px solid rgba(255,255,255,0.42)',background:'rgba(255,255,255,0.18)',
+              color:'#FFF',borderRadius:13,padding:'9px 11px',fontWeight:900,cursor:'pointer',
+              fontFamily:'Nunito,sans-serif'}}>Focus</button>
+        </div>
+      </div>
+      <div style={{display:'flex',gap:7,overflowX:'auto',paddingBottom:2}}>
+        {tabs.map(([id,lbl])=>(
+          <button key={id} onClick={()=>setTab(id)}
+            style={{border:`1px solid ${tab===id?P:OL}`,background:tab===id?PC:SUR,
+              color:tab===id?P:TM,borderRadius:14,padding:'9px 12px',
+              fontSize:11,fontWeight:900,whiteSpace:'nowrap',cursor:'pointer',
+              fontFamily:'Nunito,sans-serif'}}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+      {tab==='coach'&&<AiCoachPanel apiKey={apiKey} setApiKey={setApiKey}
+        aiModel={aiModel} setAiModel={setAiModel} daily={daily} logs={logs} TK={TK}
+        revEntries={revEntries} readinessRows={readinessRows} pace={pace}
+        gateCountdown={gateCountdown} studyHours={studyHours} toast$={toast$}/>}
+      {tab==='analytics'&&<AnalyticsPanel readinessRows={readinessRows} rank={rank} pace={pace}/>}
+      {tab==='pyq'&&<PYQTracker pyqRecords={pyqRecords} setPyqRecords={setPyqRecords} toast$={toast$}/>}
+      {tab==='timer'&&<PomodoroPanel pomo={pomo} setPomo={setPomo}/>}
+      {tab==='calendar'&&<RevisionCalendarPanel revEntries={revEntries}/>}
+      {tab==='plan'&&<SchedulePanel schedule={schedule} maxPerDay={maxPerDay} setMaxPerDay={setMaxPerDay}/>}
+      {tab==='share'&&<ShareCardPanel todayPct={todayPct} todayDone={todayDone} daily={daily}
+        bestStr={bestStr} avg30={avg30} xp={xp} badges={badges} gateCountdown={gateCountdown} toast$={toast$}/>}
+      {tab==='partner'&&<PartnerPanel partner={partner} setPartner={setPartner}
+        todayPct={todayPct} bestStr={bestStr} dueRevCount={dueRevCount} xp={xp} toast$={toast$}/>}
+    </div>
+  );
+}
+
 function App(){
   const init=loadData();
   const [daily,setDaily]=useState(init.daily);
@@ -1982,7 +2788,15 @@ function App(){
   const prevBadgesRef=useRef(badges);
   const [darkMode,setDarkMode]=useState(()=>{try{return localStorage.getItem('habitra_dark')==='1';}catch(e){return false;}});
   const [gateDate,setGateDate]=useState(()=>{try{return localStorage.getItem('habitra_gate_date')||'2027-02-01';}catch(e){return '2027-02-01';}});
-  const [studyHours,setStudyHours]=useState(()=>{try{const r=localStorage.getItem('habitra_study_hours');return r?JSON.parse(r):{}}catch(e){return {};}});
+  const [studyHours,setStudyHours]=useState(()=>{try{const r=localStorage.getItem('habitra_study_hours');return r?JSON.parse(r):(init.studyHours||{})}catch(e){return init.studyHours||{};}});
+  const [pyqRecords,setPyqRecords]=useState(init.pyqRecords||[]);
+  const [apiKey,setApiKey]=useState(()=>{try{return localStorage.getItem('habitra_anthropic_key')||'';}catch(e){return '';}});
+  const [aiModel,setAiModel]=useState(()=>{try{return localStorage.getItem('habitra_ai_model')||'claude-sonnet-4-20250514';}catch(e){return 'claude-sonnet-4-20250514';}});
+  const [paletteId,setPaletteId]=useState(()=>{try{return localStorage.getItem('habitra_palette')||'aurora';}catch(e){return 'aurora';}});
+  applyPaletteGlobals(paletteId);
+  const [partner,setPartner]=useState(()=>{try{return JSON.parse(localStorage.getItem('habitra_partner')||'{}');}catch(e){return {};}});
+  const [pomo,setPomo]=useState(()=>{try{const r=localStorage.getItem('habitra_pomo');return r?JSON.parse(r):{mode:'focus',seconds:POMO_SECONDS.focus,running:false,sessions:0};}catch(e){return {mode:'focus',seconds:POMO_SECONDS.focus,running:false,sessions:0};}});
+  const [showFocus,setShowFocus]=useState(false);
   const [showHoursInput,setShowHoursInput]=useState(false);
   const [hoursInput,setHoursInput]=useState('');
   const prevTodayPctRef=useRef(0);
@@ -2002,6 +2816,8 @@ function App(){
         if(d.logs&&typeof d.logs==='object')setLogs(d.logs);
         if(d.wlogs&&typeof d.wlogs==='object')setWlogs(d.wlogs);
         if(Array.isArray(d.revEntries))setRevEntries(d.revEntries);
+        if(d.studyHours&&typeof d.studyHours==='object')setStudyHours(d.studyHours);
+        if(Array.isArray(d.pyqRecords))setPyqRecords(d.pyqRecords);
         saveLocal(d);
       }
       setSyncStatus('synced');
@@ -2012,7 +2828,7 @@ function App(){
   const isFirstRender=useRef(true);
   useEffect(()=>{
     if(isFirstRender.current){isFirstRender.current=false;return;}
-    const data={daily,weekly,logs,wlogs,revEntries};
+    const data={daily,weekly,logs,wlogs,revEntries,studyHours,pyqRecords};
     saveLocal(data);
     if(window.__FB_SAVE__){
       setSyncStatus('saving');
@@ -2023,7 +2839,7 @@ function App(){
           .catch(()=>setSyncStatus('offline'));
       },1500);
     }
-  },[daily,weekly,logs,wlogs,revEntries]);
+  },[daily,weekly,logs,wlogs,revEntries,studyHours,pyqRecords]);
 
   /* Dark mode body class */
   useEffect(()=>{
@@ -2031,13 +2847,44 @@ function App(){
     try{localStorage.setItem('habitra_dark',darkMode?'1':'0');}catch(e){}
   },[darkMode]);
 
+  useEffect(()=>{
+    applyPaletteGlobals(paletteId);
+    document.body.style.background=darkMode?'#1A1625':BG;
+    const meta=document.querySelector('meta[name="theme-color"]');
+    if(meta)meta.setAttribute('content',P);
+    try{localStorage.setItem('habitra_palette',paletteId);}catch(e){}
+  },[paletteId,darkMode]);
+
+  useEffect(()=>{try{localStorage.setItem('habitra_anthropic_key',apiKey);}catch(e){}},[apiKey]);
+  useEffect(()=>{try{localStorage.setItem('habitra_ai_model',aiModel);}catch(e){}},[aiModel]);
+  useEffect(()=>{try{localStorage.setItem('habitra_partner',JSON.stringify(partner));}catch(e){}},[partner]);
+  useEffect(()=>{try{localStorage.setItem('habitra_pomo',JSON.stringify(pomo));}catch(e){}},[pomo]);
+
+  useEffect(()=>{
+    if(!pomo.running)return;
+    const id=setInterval(()=>{
+      setPomo(p=>{
+        if(!p.running)return p;
+        if(p.seconds<=1){
+          const nextMode=p.mode==='focus'?'short':'focus';
+          if(p.mode==='focus'){
+            setStudyHours(h=>({...h,[TK]:Math.round(((h[TK]||0)+(25/60))*10)/10}));
+            setTimeout(()=>toast$('Pomodoro complete: 25m logged'),0);
+            buzz([80,40,80]);
+          }
+          return{...p,running:false,mode:nextMode,seconds:POMO_SECONDS[nextMode],
+            sessions:(p.sessions||0)+(p.mode==='focus'?1:0)};
+        }
+        return{...p,seconds:p.seconds-1};
+      });
+    },1000);
+    return()=>clearInterval(id);
+  },[pomo.running,TK]);
+
   /* PWA install prompt */
   useEffect(()=>{
-    const handler=e=>{e.preventDefault();setDeferredInstallPrompt(e);setShowInstallBanner(true);};
+    const handler=e=>{e.preventDefault();setDeferredInstallPrompt(e);};
     window.addEventListener('beforeinstallprompt',handler);
-    // Also show if in standalone mode check fails
-    const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
-    if(!isStandalone)setTimeout(()=>setShowInstallBanner(true),3000);
     return()=>window.removeEventListener('beforeinstallprompt',handler);
   },[]);
 
@@ -2048,7 +2895,7 @@ function App(){
     if(touchStartX.current===null)return;
     const dx=e.changedTouches[0].clientX-touchStartX.current;
     if(Math.abs(dx)<60)return;
-    const VIEWS=['today','monthly','revision','stats','settings'];
+    const VIEWS=['today','monthly','revision','stats','achieve','power','settings'];
     const ci=VIEWS.indexOf(view);
     if(dx<0&&ci<VIEWS.length-1)setView(VIEWS[ci+1]);
     else if(dx>0&&ci>0)setView(VIEWS[ci-1]);
@@ -2092,6 +2939,7 @@ function App(){
       // Show toast for new badge
       const newOnes=newBadges.filter(b=>!badges.includes(b));
       if(newOnes.length>0){
+        buzz([60,40,60]);
         const b=ALL_BADGES.find(x=>x.id===newOnes[0]);
         if(b)setTimeout(()=>toast$(`${b.icon} Badge earned: ${b.name}!`),500);
       }
@@ -2101,7 +2949,7 @@ function App(){
   /* Confetti when 100% habits done */
   useEffect(()=>{
     const pct=daily.length?Math.round(daily.filter((_,i)=>(logs[TK]||{})[i]).length/daily.length*100):0;
-    if(pct===100&&prevTodayPctRef.current<100&&daily.length>0)fireConfetti();
+    if(pct===100&&prevTodayPctRef.current<100&&daily.length>0){fireConfetti();buzz([80,50,80]);}
     prevTodayPctRef.current=pct;
   },[logs,TK]);
 
@@ -2139,12 +2987,13 @@ function App(){
   const toast$=(msg,type='ok')=>{setToast({msg,type});setTimeout(()=>setToast(null),2800);};
 
   /* HABIT TOGGLES */
-  const toggleToday=i=>setLogs(p=>({...p,[TK]:{...(p[TK]||{}),[i]:!(p[TK]||{})[i]}}));
-  const toggleDay=(i,y,m,d)=>{const k=dk(y,m,d);setLogs(p=>({...p,[k]:{...(p[k]||{}),[i]:!(p[k]||{})[i]}}));};
-  const toggleWeekly=i=>setWlogs(p=>({...p,[CWK]:{...(p[CWK]||{}),[i]:!(p[CWK]||{})[i]}}));
+  const toggleToday=i=>{buzz(14);setLogs(p=>({...p,[TK]:{...(p[TK]||{}),[i]:!(p[TK]||{})[i]}}));};
+  const toggleDay=(i,y,m,d)=>{buzz(10);const k=dk(y,m,d);setLogs(p=>({...p,[k]:{...(p[k]||{}),[i]:!(p[k]||{})[i]}}));};
+  const toggleWeekly=i=>{buzz(12);setWlogs(p=>({...p,[CWK]:{...(p[CWK]||{}),[i]:!(p[CWK]||{})[i]}}));};
 
   /* REVISION TOGGLE */
   const toggleRevision=(entryId,interval)=>{
+    buzz(18);
     setRevEntries(prev=>prev.map(e=>{
       if(e.id!==entryId)return e;
       const cur=e.reviews[String(interval)];
@@ -2215,7 +3064,7 @@ function App(){
 
   /* BACKUP EXPORT */
   const doExport=()=>{
-    const json=JSON.stringify({daily,weekly,logs,wlogs,revEntries,v:5,at:new Date().toISOString()},null,2);
+    const json=JSON.stringify({daily,weekly,logs,wlogs,revEntries,studyHours,pyqRecords,v:6,at:new Date().toISOString()},null,2);
     const blob=new Blob([json],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
@@ -2227,7 +3076,7 @@ function App(){
 
   /* COPY */
   const doCopy=async()=>{
-    const json=JSON.stringify({daily,weekly,logs,wlogs,revEntries,v:5,at:new Date().toISOString()});
+    const json=JSON.stringify({daily,weekly,logs,wlogs,revEntries,studyHours,pyqRecords,v:6,at:new Date().toISOString()});
     try{await navigator.clipboard.writeText(json);toast$('Copied to clipboard ✅');}
     catch(e){toast$('Copy failed — use Download','warn');}
   };
@@ -2244,6 +3093,8 @@ function App(){
         if(d.logs&&typeof d.logs==='object')setLogs(d.logs);
         if(d.wlogs&&typeof d.wlogs==='object')setWlogs(d.wlogs);
         if(Array.isArray(d.revEntries))setRevEntries(d.revEntries);
+        if(d.studyHours&&typeof d.studyHours==='object')setStudyHours(d.studyHours);
+        if(Array.isArray(d.pyqRecords))setPyqRecords(d.pyqRecords);
         toast$('Data restored ✅');
       }catch(err){toast$('Invalid file — not a Habitra backup','err');}
       e.target.value='';
@@ -2261,6 +3112,8 @@ function App(){
       if(d.logs&&typeof d.logs==='object')setLogs(d.logs);
       if(d.wlogs&&typeof d.wlogs==='object')setWlogs(d.wlogs);
       if(Array.isArray(d.revEntries))setRevEntries(d.revEntries);
+      if(d.studyHours&&typeof d.studyHours==='object')setStudyHours(d.studyHours);
+      if(Array.isArray(d.pyqRecords))setPyqRecords(d.pyqRecords);
       toast$('Restored from pasted JSON ✅');
       setPasteTxt('');setPasteOpen(false);
     }catch(e){toast$('Invalid JSON','err');}
@@ -2282,6 +3135,16 @@ function App(){
   const weakSuggestions=useMemo(()=>getWeakSuggestions({revEntries,logs,daily,studyHours}),[revEntries,logs,daily,studyHours]);
   const prevM=()=>vm===0?(setVm(11),setVy(y=>y-1)):setVm(m=>m-1);
   const nextM=()=>vm===11?(setVm(0),setVy(y=>y+1)):setVm(m=>m+1);
+  const installApp=async()=>{
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice.catch(()=>null);
+      setDeferredInstallPrompt(null);
+      toast$('Install prompt opened');
+    }else{
+      alert('To install: on Android Chrome use browser menu → Add to Home screen. On iPhone Safari use Share → Add to Home Screen.');
+    }
+  };
 
   /* NAV ITEMS */
   const NAV=[
@@ -2290,6 +3153,7 @@ function App(){
     ['revision',IC.book,'Revise'],
     ['stats',IC.bell,'Stats'],
     ['achieve','🏆','Achieve'],
+    ['power','⚡','Power'],
     ['settings',IC.gear,'More'],
   ];
 
@@ -2299,7 +3163,7 @@ function App(){
       <div style={{minHeight:'100vh',background:BG,display:'flex',flexDirection:'column',
         alignItems:'center',justifyContent:'center',gap:16}}>
         <div style={{width:56,height:56,borderRadius:18,
-          background:'linear-gradient(135deg,#7C4DFF,#B388FF)',
+          background:`linear-gradient(135deg,${THEME.grad[0]},${THEME.grad[1]})`,
           display:'flex',alignItems:'center',justifyContent:'center',
           boxShadow:'0 6px 20px rgba(124,77,255,0.4)'}}>
           <Ico d={IC.flame} s={28} c='#FFF' fill='none'/>
@@ -2307,7 +3171,7 @@ function App(){
         <div style={{fontSize:22,fontWeight:900,color:P,letterSpacing:-0.5}}>HABITRA</div>
         <div style={{fontSize:13,color:TS,fontWeight:600}}>Syncing your data… ☁️</div>
         <div style={{width:120,height:4,background:OL,borderRadius:2,overflow:'hidden',marginTop:4}}>
-          <div style={{width:'60%',height:'100%',background:`linear-gradient(90deg,${P},#B388FF)`,
+          <div style={{width:'60%',height:'100%',background:`linear-gradient(90deg,${THEME.grad[0]},${THEME.grad[1]})`,
             borderRadius:2,animation:'slide 1.2s ease-in-out infinite'}}/>
         </div>
         <style>{`@keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}`}</style>
@@ -2325,7 +3189,7 @@ function App(){
 
       {/* PWA INSTALL BANNER */}
       {showInstallBanner&&!window.matchMedia('(display-mode: standalone)').matches&&(
-        <div style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',
+        <div style={{background:`linear-gradient(90deg,${THEME.grad[0]},${THEME.grad[1]})`,
           padding:'10px 16px',display:'flex',alignItems:'center',gap:10,
           position:'sticky',top:0,zIndex:50}}>
           <span style={{fontSize:20}}>📱</span>
@@ -2358,7 +3222,7 @@ function App(){
         boxShadow:'0 2px 10px rgba(103,80,164,0.09)'}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <div style={{width:36,height:36,borderRadius:12,
-            background:'linear-gradient(135deg,#7C4DFF,#B388FF)',
+            background:`linear-gradient(135deg,${THEME.grad[0]},${THEME.grad[1]})`,
             display:'flex',alignItems:'center',justifyContent:'center',
             boxShadow:'0 3px 10px rgba(124,77,255,0.35)'}}>
             <Ico d={IC.flame} s={18} c='#FFF' fill='none'/>
@@ -2408,7 +3272,7 @@ function App(){
       </div>
 
       {/* CONTENT */}
-      <div style={{padding:'14px 14px 0',maxWidth:540,margin:'0 auto'}}>
+      <div key={view} className="view-panel" style={{padding:'14px 14px 0',maxWidth:540,margin:'0 auto'}}>
 
         {view==='today'&&(
           <TodayView daily={daily} logs={logs} TK={TK} toggleToday={toggleToday}
@@ -2440,6 +3304,16 @@ function App(){
           <GamificationView xp={xp} badges={badges}
             daily={daily} logs={logs} revEntries={revEntries} studyHours={studyHours}/>
         )}
+        {view==='power'&&(
+          <PowerView daily={daily} logs={logs} TK={TK} toggleToday={toggleToday}
+            revEntries={revEntries} pyqRecords={pyqRecords} setPyqRecords={setPyqRecords}
+            gateCountdown={gateCountdown} avg30={avg30} totalHours={totalHours}
+            studyHours={studyHours} todayPct={todayPct} todayDone={todayDone}
+            bestStr={bestStr} dueRevCount={dueRevCount} xp={xp} badges={badges}
+            apiKey={apiKey} setApiKey={setApiKey} aiModel={aiModel} setAiModel={setAiModel}
+            partner={partner} setPartner={setPartner}
+            pomo={pomo} setPomo={setPomo} setShowFocus={setShowFocus} toast$={toast$}/>
+        )}
         {view==='settings'&&(
           <SettingsView daily={daily} weekly={weekly}
             setDaily={setDaily} setWeekly={setWeekly}
@@ -2456,9 +3330,17 @@ function App(){
             darkMode={darkMode} setDarkMode={setDarkMode}
             gateDate={gateDate} setGateDate={setGateDate}
             notifEnabled={notifEnabled} setNotifEnabled={setNotifEnabled}
-            notifTime={notifTime} setNotifTime={setNotifTime}/>
+            notifTime={notifTime} setNotifTime={setNotifTime}
+            paletteId={paletteId} setPaletteId={setPaletteId}
+            setStudyHours={setStudyHours} setPyqRecords={setPyqRecords}
+            installApp={installApp} canInstall={!!deferredInstallPrompt}/>
         )}
       </div>
+
+      {showFocus&&(
+        <FocusMode daily={daily} logs={logs} TK={TK} toggleToday={toggleToday}
+          todayPct={todayPct} gateCountdown={gateCountdown} onClose={()=>setShowFocus(false)}/>
+      )}
 
       {/* FAB */}
       {(view==='today'||view==='weekly')&&(
