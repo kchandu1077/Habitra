@@ -5,6 +5,64 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>HABITRA — Habit + Revision Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<meta name="theme-color" content="#6750A4"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="HABITRA"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjNjc1MEE0Ii8+PHRleHQgeT0iNzUiIHg9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjcwIj7wn5a8PC90ZXh0Pjwvc3ZnPg=="/>
+<link rel="manifest" id="pwa-manifest-link"/>
+<script>
+// Inject PWA manifest dynamically
+(function(){
+  const manifest={name:'HABITRA — Habit & Revision Tracker',short_name:'HABITRA',
+    description:'GATE prep habit & spaced revision tracker',
+    start_url:window.location.href,display:'standalone',
+    orientation:'portrait',theme_color:'#6750A4',background_color:'#F6F0FF',
+    icons:[{src:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjNjc1MEE0Ii8+PHRleHQgeT0iNzUiIHg9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjcwIj7wn5a8PC90ZXh0Pjwvc3ZnPg==',
+      sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]};
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+  const url=URL.createObjectURL(blob);
+  document.getElementById('pwa-manifest-link').href=url;
+})();
+
+// Register Service Worker for push notifications
+if('serviceWorker' in navigator){
+  const swCode=`
+self.addEventListener('push',e=>{
+  const d=e.data?e.data.json():{};
+  self.registration.showNotification(d.title||'HABITRA',{
+    body:d.body||'Check your habits today!',
+    icon:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjNjc1MEE0Ii8+PHRleHQgeT0iNzUiIHg9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjcwIj7wn5a8PC90ZXh0Pjwvc3ZnPg==',
+    badge:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjNjc1MEE0Ii8+PHRleHQgeT0iNzUiIHg9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjcwIj7wn5a8PC90ZXh0Pjwvc3ZnPg==',
+    vibrate:[200,100,200],tag:'habitra-reminder'
+  });
+});
+self.addEventListener('notificationclick',e=>{e.notification.close();e.waitUntil(clients.openWindow('/'));});
+self.addEventListener('message',e=>{
+  if(e.data&&e.data.type==='SCHEDULE_NOTIF'){
+    const now=new Date(),target=new Date();
+    const [h,m]=(e.data.time||'09:00').split(':').map(Number);
+    target.setHours(h,m,0,0);
+    if(target<=now)target.setDate(target.getDate()+1);
+    const delay=target-now;
+    setTimeout(()=>{
+      self.registration.showNotification('HABITRA ⏰',{
+        body:e.data.body||'Time to check your habits!',
+        icon:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIwIiBmaWxsPSIjNjc1MEE0Ii8+PHRleHQgeT0iNzUiIHg9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjcwIj7wn5a8PC90ZXh0Pjwvc3ZnPg==',
+        vibrate:[200,100,200],tag:'habitra-daily'
+      });
+    },delay);
+  }
+});
+`;
+  const blob=new Blob([swCode],{type:'application/javascript'});
+  const swUrl=URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).then(reg=>{
+    window.__SW_REG__=reg;
+    console.log('SW registered');
+  }).catch(e=>console.log('SW reg failed',e));
+}
+</script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -86,6 +144,149 @@ const GATE_SUBJECTS=['SOM','FM','SM','RCC','Steel','Geotech','Highways',
 
 const REV_INTERVALS=[0,3,6,30,60,90];
 const REV_LABELS={0:'Same Day',3:'3rd Day',6:'6th Day',30:'30th Day',60:'60th Day',90:'90th Day'};
+
+/* ── GAMIFICATION ─────────────────────────────────── */
+const XP_REWARDS={habit:5,allHabits:25,revision:10,studyHour:8,streak7:50,streak30:200,firstEntry:20};
+const LEVEL_THRESHOLDS=[0,100,250,500,900,1400,2100,3000,4200,5600,7500];
+const LEVEL_NAMES=['Rookie','Scholar','Studious','Diligent','Focused','Sharp','Expert','Master','Elite','Prodigy','Legend'];
+const getLevel=xp=>{let l=0;for(let i=0;i<LEVEL_THRESHOLDS.length;i++){if(xp>=LEVEL_THRESHOLDS[i])l=i;}return l;};
+const getLevelProgress=xp=>{const l=getLevel(xp);const cur=LEVEL_THRESHOLDS[l];const nxt=LEVEL_THRESHOLDS[l+1]||LEVEL_THRESHOLDS[l]+2000;return Math.round((xp-cur)/(nxt-cur)*100);};
+const getLevelName=xp=>LEVEL_NAMES[Math.min(getLevel(xp),LEVEL_NAMES.length-1)];
+const getLevelXpNeeded=xp=>{const l=getLevel(xp);return LEVEL_THRESHOLDS[l+1]||LEVEL_THRESHOLDS[l]+2000;};
+
+const ALL_BADGES=[
+  {id:'first_habit',icon:'🌱',name:'First Step',desc:'Complete your first habit'},
+  {id:'streak_3',icon:'🔥',name:'On Fire',desc:'3-day habit streak'},
+  {id:'streak_7',icon:'⚡',name:'7-Day Warrior',desc:'7-day streak on any habit'},
+  {id:'streak_30',icon:'💎',name:'Iron Will',desc:'30-day streak on any habit'},
+  {id:'perfect_day',icon:'⭐',name:'Perfect Day',desc:'Complete ALL habits in a day'},
+  {id:'perfect_week',icon:'🏆',name:'Perfect Week',desc:'100% habits for 7 days straight'},
+  {id:'first_revision',icon:'📚',name:'Revision Start',desc:'Complete first revision'},
+  {id:'rev_10',icon:'🎯',name:'Revision Pro',desc:'Complete 10 revision sessions'},
+  {id:'rev_50',icon:'🦁',name:'Revision Master',desc:'Complete 50 revision sessions'},
+  {id:'all_rev_done',icon:'✅',name:'Complete Cycle',desc:'Fully complete one entry (all 6 revisions)'},
+  {id:'hours_10',icon:'⏰',name:'10-Hour Club',desc:'Log 10 total study hours'},
+  {id:'hours_50',icon:'📖',name:'50-Hour Scholar',desc:'Log 50 total study hours'},
+  {id:'hours_100',icon:'🎓',name:'100-Hour Elite',desc:'Log 100 total study hours'},
+  {id:'level_5',icon:'🚀',name:'Level 5 Reached',desc:'Reach Scholar level 5'},
+  {id:'subjects_3',icon:'🧠',name:'Multi-Subject',desc:'Study 3+ different subjects'},
+  {id:'week_warrior',icon:'💪',name:'Week Warrior',desc:'Log study hours 7 days in a row'},
+];
+
+function checkBadges({logs,daily,revEntries,studyHours,xp,existing=[]}){
+  const earned=new Set(existing);
+  const today=todayStr();
+
+  // first_habit
+  const anyHabit=Object.values(logs).some(d=>Object.values(d).some(Boolean));
+  if(anyHabit)earned.add('first_habit');
+
+  // streak badges
+  const maxStreak=Math.max(0,...daily.map((_,i)=>getStreak(logs,i)));
+  if(maxStreak>=3)earned.add('streak_3');
+  if(maxStreak>=7)earned.add('streak_7');
+  if(maxStreak>=30)earned.add('streak_30');
+
+  // perfect_day
+  const hasPerfect=Object.keys(logs).some(k=>{
+    const d=logs[k]||{};return daily.length>0&&daily.every((_,i)=>d[i]);
+  });
+  if(hasPerfect)earned.add('perfect_day');
+
+  // perfect_week — 7 consecutive days all habits done
+  let consec=0;
+  for(let i=0;i<90;i++){
+    const dt=new Date();dt.setDate(dt.getDate()-i);
+    const k=dk(dt.getFullYear(),dt.getMonth(),dt.getDate());
+    const done=daily.length>0&&daily.every((_,idx)=>(logs[k]||{})[idx]);
+    if(done)consec++;else break;
+  }
+  if(consec>=7)earned.add('perfect_week');
+
+  // revision badges
+  const completedRevs=revEntries.reduce((a,e)=>a+REV_INTERVALS.filter(iv=>e.reviews[String(iv)]===true).length,0);
+  if(completedRevs>=1)earned.add('first_revision');
+  if(completedRevs>=10)earned.add('rev_10');
+  if(completedRevs>=50)earned.add('rev_50');
+  if(revEntries.some(e=>REV_INTERVALS.every(iv=>e.reviews[String(iv)]===true)))earned.add('all_rev_done');
+
+  // hours badges
+  const totalH=Object.values(studyHours).reduce((a,b)=>a+b,0);
+  if(totalH>=10)earned.add('hours_10');
+  if(totalH>=50)earned.add('hours_50');
+  if(totalH>=100)earned.add('hours_100');
+
+  // level badge
+  if(getLevel(xp)>=5)earned.add('level_5');
+
+  // subjects badge
+  const subjSet=new Set(revEntries.map(e=>e.subject));
+  if(subjSet.size>=3)earned.add('subjects_3');
+
+  // week_warrior — 7 consecutive days with study hours logged
+  let hwk=0;
+  for(let i=0;i<30;i++){
+    const dt=new Date();dt.setDate(dt.getDate()-i);
+    const k=dk(dt.getFullYear(),dt.getMonth(),dt.getDate());
+    if(studyHours[k]>0)hwk++;else break;
+  }
+  if(hwk>=7)earned.add('week_warrior');
+
+  return [...earned];
+}
+
+/* ── WEAK TOPIC SUGGESTIONS ──────────────────────── */
+function getWeakSuggestions({revEntries,logs,daily,studyHours}){
+  const tips=[];
+
+  // Overdue revisions by subject
+  const overdueBySubj={};
+  revEntries.forEach(e=>{
+    REV_INTERVALS.forEach(iv=>{
+      if(isRevOverdue(e,iv)){overdueBySubj[e.subject]=(overdueBySubj[e.subject]||0)+1;}
+    });
+  });
+  Object.entries(overdueBySubj).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([subj,cnt])=>{
+    tips.push({icon:'🔁',color:'#E65100',bg:'#FFF3E0',border:'#FFB74D',
+      msg:`${subj} has ${cnt} overdue revision${cnt>1?'s':''}`,
+      action:`Open Revisions → filter by ${subj}`,urgency:cnt>=3?'high':'med'});
+  });
+
+  // Low 14-day completion habits
+  daily.forEach((h,i)=>{
+    const rate=getRate(logs,i,14);
+    if(rate<50){
+      tips.push({icon:'📉',color:'#C62828',bg:'#FFEBEE',border:'#FFCDD2',
+        msg:`"${h}" — only ${rate}% done in last 2 weeks`,
+        action:'Focus on this habit tomorrow',urgency:rate<25?'high':'med'});
+    }
+  });
+
+  // No study hours logged today
+  const TK=todayStr();
+  if(!studyHours[TK]){
+    const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+    const yk=dk(yesterday.getFullYear(),yesterday.getMonth(),yesterday.getDate());
+    if(!studyHours[yk]){
+      tips.push({icon:'📚',color:'#1565C0',bg:'#E3F2FD',border:'#90CAF9',
+        msg:'No study hours logged today',action:'Go to Today → tap + Log to track time',urgency:'low'});
+    }
+  }
+
+  // Subjects with no recent study (last 7 days of revisions)
+  const recentSubjs=new Set();
+  const cutoff=addDays(todayStr(),-7);
+  revEntries.filter(e=>e.dateStudied>=cutoff).forEach(e=>recentSubjs.add(e.subject));
+  const allSubjs=[...new Set(revEntries.map(e=>e.subject))];
+  const neglected=allSubjs.filter(s=>!recentSubjs.has(s));
+  if(neglected.length>0){
+    tips.push({icon:'😴',color:'#7B1FA2',bg:'#F3E5F5',border:'#CE93D8',
+      msg:`${neglected.slice(0,2).join(', ')} — no new sessions in 7 days`,
+      action:'Consider adding a study session',urgency:'low'});
+  }
+
+  return tips.slice(0,5);
+}
 
 /* ── STORAGE ─────────────────────────────────────────*/
 const SK='habitra_mega_v1';
@@ -190,7 +391,229 @@ const getTodayDueEntries=(entries)=>entries.filter(e=>
   REV_INTERVALS.some(iv=>isRevDueToday(e,iv)||isRevOverdue(e,iv))
 );
 
-/* ── ICONS ───────────────────────────────────────────*/
+/* ── HEATMAP COMPONENT ───────────────────────────── */
+function HeatmapGrid({logs,daily,weeks=15}){
+  const cells=useMemo(()=>{
+    const arr=[];
+    const today=new Date();
+    const totalDays=weeks*7;
+    // pad to start of week
+    const startDay=new Date(today);
+    startDay.setDate(startDay.getDate()-(totalDays-1));
+    const dow=startDay.getDay();
+    const padded=[];
+    for(let i=0;i<dow;i++)padded.push(null);
+    for(let i=0;i<totalDays;i++){
+      const d=new Date(startDay);d.setDate(startDay.getDate()+i);
+      const k=dk(d.getFullYear(),d.getMonth(),d.getDate());
+      const done=daily.length?daily.filter((_,idx)=>(logs[k]||{})[idx]).length:0;
+      const pct=daily.length?done/daily.length:0;
+      padded.push({k,pct,done,total:daily.length,d:new Date(d)});
+    }
+    return padded;
+  },[logs,daily,weeks]);
+
+  const cols=useMemo(()=>{
+    const cols=[];
+    for(let c=0;c<Math.ceil(cells.length/7);c++){
+      cols.push(cells.slice(c*7,(c+1)*7));
+    }
+    return cols;
+  },[cells]);
+
+  const cellColor=pct=>{
+    if(pct===0)return '#EDE7FF';
+    if(pct<0.4)return '#C4B5F4';
+    if(pct<0.7)return '#9C68FF';
+    if(pct<1)return '#7C4DFF';
+    return '#4A148C';
+  };
+
+  return(
+    <div style={{overflowX:'auto',paddingBottom:4}}>
+      <div style={{display:'flex',gap:2,minWidth:'fit-content'}}>
+        {cols.map((col,ci)=>(
+          <div key={ci} style={{display:'flex',flexDirection:'column',gap:2}}>
+            {col.map((cell,ri)=>cell===null?(
+              <div key={ri} style={{width:10,height:10}}/>
+            ):(
+              <div key={ri} title={`${cell.d.toDateString()}: ${cell.done}/${cell.total} habits`}
+                style={{width:10,height:10,borderRadius:2,
+                  background:cellColor(cell.pct),
+                  opacity:cell.d>new Date()?0.2:1}}/>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:4,marginTop:7,justifyContent:'flex-end'}}>
+        <span style={{fontSize:9,color:'#79747E'}}>Less</span>
+        {[0,0.3,0.6,0.9,1].map(p=>(
+          <div key={p} style={{width:10,height:10,borderRadius:2,background:cellColor(p)}}/>
+        ))}
+        <span style={{fontSize:9,color:'#79747E'}}>More</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── GAMIFICATION VIEW ───────────────────────────── */
+function GamificationView({xp,badges,daily,logs,revEntries,studyHours}){
+  const level=getLevel(xp);
+  const levelName=getLevelName(xp);
+  const progress=getLevelProgress(xp);
+  const xpNeeded=getLevelXpNeeded(xp);
+  const earnedSet=new Set(badges);
+
+  // XP breakdown for this week
+  const weekXp=useMemo(()=>{
+    let total=0;
+    for(let i=0;i<7;i++){
+      const d=new Date();d.setDate(d.getDate()-i);
+      const k=dk(d.getFullYear(),d.getMonth(),d.getDate());
+      const done=daily.filter((_,idx)=>(logs[k]||{})[idx]).length;
+      total+=done*XP_REWARDS.habit;
+      if(daily.length>0&&done===daily.length)total+=XP_REWARDS.allHabits;
+      if(studyHours[k])total+=Math.floor(studyHours[k])*XP_REWARDS.studyHour;
+    }
+    return total;
+  },[logs,daily,studyHours]);
+
+  return(
+    <div>
+      {/* Level Card */}
+      <div style={{background:'linear-gradient(135deg,#6750A4,#9C68FF)',
+        borderRadius:24,padding:'20px',marginBottom:14,
+        boxShadow:'0 8px 28px rgba(103,80,164,0.35)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <div style={{width:64,height:64,borderRadius:20,
+            background:'rgba(255,255,255,0.2)',
+            border:'3px solid rgba(255,255,255,0.5)',
+            display:'flex',alignItems:'center',justifyContent:'center',
+            flexShrink:0}}>
+            <span style={{fontSize:28}}>
+              {level<=2?'🌱':level<=4?'📖':level<=6?'🎯':level<=8?'🦁':'🏆'}
+            </span>
+          </div>
+          <div style={{flex:1,color:'#FFF'}}>
+            <div style={{fontSize:11,opacity:0.75,letterSpacing:1,fontWeight:700}}>LEVEL {level}</div>
+            <div style={{fontSize:22,fontWeight:900,lineHeight:1}}>{levelName}</div>
+            <div style={{fontSize:11,opacity:0.8,marginTop:3}}>{xp} / {xpNeeded} XP</div>
+          </div>
+          <div style={{textAlign:'right',color:'#FFF'}}>
+            <div style={{fontSize:11,opacity:0.7}}>This week</div>
+            <div style={{fontSize:20,fontWeight:900}}>+{weekXp}</div>
+            <div style={{fontSize:10,opacity:0.7}}>XP earned</div>
+          </div>
+        </div>
+        <div style={{marginTop:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',
+            fontSize:10,color:'rgba(255,255,255,0.7)',marginBottom:4}}>
+            <span>Level {level}</span>
+            <span>{progress}% → Level {level+1}</span>
+          </div>
+          <div style={{height:8,background:'rgba(255,255,255,0.2)',borderRadius:4,overflow:'hidden'}}>
+            <div style={{height:'100%',width:`${progress}%`,
+              background:'rgba(255,255,255,0.9)',borderRadius:4,
+              transition:'width 0.6s ease'}}/>
+          </div>
+        </div>
+      </div>
+
+      {/* XP Source Guide */}
+      <div style={{background:'#FFFFFF',border:'1px solid #E4DAFB',borderRadius:18,
+        padding:'14px',marginBottom:14,boxShadow:'0 1px 4px rgba(103,80,164,0.07)'}}>
+        <div style={{fontSize:12,fontWeight:800,color:'#6750A4',marginBottom:10,letterSpacing:0.5}}>⚡ HOW TO EARN XP</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7}}>
+          {[
+            ['✅ Each habit done','5 XP'],['🌟 All habits done','25 XP'],
+            ['📚 Revision done','10 XP'],['⏰ Per study hour','8 XP'],
+            ['🔥 7-day streak','50 XP'],['💎 30-day streak','200 XP'],
+          ].map(([label,val])=>(
+            <div key={label} style={{background:'#F6F0FF',borderRadius:10,
+              padding:'8px 10px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:11,fontWeight:600,color:'#49454F'}}>{label}</span>
+              <span style={{fontSize:12,fontWeight:900,color:'#6750A4'}}>{val}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Badges */}
+      <div style={{fontSize:13,fontWeight:800,color:'#1C1B1F',marginBottom:10}}>
+        🏅 Badges — {earnedSet.size}/{ALL_BADGES.length} earned
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginBottom:14}}>
+        {ALL_BADGES.map(b=>{
+          const earned=earnedSet.has(b.id);
+          return(
+            <div key={b.id} style={{background:earned?'#FFFFFF':'#F6F0FF',
+              border:`2px solid ${earned?'#C4B5F4':'#E4DAFB'}`,
+              borderRadius:16,padding:'11px 12px',
+              opacity:earned?1:0.55,
+              boxShadow:earned?'0 2px 10px rgba(103,80,164,0.12)':'none',
+              transition:'all 0.2s'}}>
+              <div style={{fontSize:22,marginBottom:5}}>{b.icon}</div>
+              <div style={{fontSize:12,fontWeight:800,color:earned?'#1C1B1F':'#79747E'}}>{b.name}</div>
+              <div style={{fontSize:10,color:'#79747E',marginTop:2,lineHeight:1.4}}>{b.desc}</div>
+              {earned&&<div style={{fontSize:9,color:'#6750A4',fontWeight:800,marginTop:4}}>✓ EARNED</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── SUGGESTIONS CARD ────────────────────────────── */
+function SuggestionsCard({suggestions}){
+  const [open,setOpen]=useState(true);
+  if(!suggestions.length)return null;
+  return(
+    <div style={{background:'#FFFFFF',border:'2px solid #E4DAFB',
+      borderRadius:20,padding:'13px',marginBottom:12,
+      boxShadow:'0 2px 12px rgba(103,80,164,0.1)'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+        marginBottom:open?10:0}}>
+        <div style={{fontSize:13,fontWeight:900,color:'#6750A4',display:'flex',gap:6,alignItems:'center'}}>
+          💡 Smart Suggestions
+          <span style={{background:'#EDE7FF',color:'#6750A4',fontSize:10,fontWeight:800,
+            padding:'2px 7px',borderRadius:10}}>{suggestions.length}</span>
+        </div>
+        <button onClick={()=>setOpen(v=>!v)}
+          style={{background:'#F0EAFE',border:'none',borderRadius:10,
+            padding:'4px 10px',cursor:'pointer',fontSize:11,fontWeight:700,color:'#6750A4',
+            fontFamily:'Nunito,sans-serif'}}>
+          {open?'Hide':'Show'}
+        </button>
+      </div>
+      {open&&suggestions.map((s,i)=>(
+        <div key={i} style={{background:s.bg,border:`1px solid ${s.border}`,
+          borderRadius:13,padding:'10px 12px',marginBottom:7,
+          display:'flex',gap:9,alignItems:'flex-start'}}>
+          <span style={{fontSize:16,flexShrink:0,marginTop:1}}>{s.icon}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,fontWeight:700,color:s.color,lineHeight:1.4}}>{s.msg}</div>
+            <div style={{fontSize:10,color:'#79747E',marginTop:3}}>👉 {s.action}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── PUSH NOTIFICATION HELPER ───────────────────── */
+async function requestNotifPermission(){
+  if(!('Notification' in window))return false;
+  if(Notification.permission==='granted')return true;
+  const perm=await Notification.requestPermission();
+  return perm==='granted';
+}
+function scheduleNotif(time,body){
+  if(!window.__SW_REG__)return;
+  window.__SW_REG__.active?.postMessage({type:'SCHEDULE_NOTIF',time,body});
+}
+
+
 const Ico=({d,s=20,c='currentColor',sw=2,fill='none'})=>(
   <svg width={s} height={s} viewBox="0 0 24 24" fill={fill} stroke={c}
     strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
@@ -685,6 +1108,55 @@ function StatsView({daily,logs,revEntries}){
               <div style={{fontSize:30,fontWeight:900,color:'#2E7D32'}}>{avg30}%</div>
             </div>
           </div>
+
+          {/* Activity Heatmap */}
+          <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:20,
+            padding:'14px',marginBottom:14,boxShadow:'0 1px 4px rgba(103,80,164,0.07)'}}>
+            <div style={{fontSize:12,fontWeight:800,color:P,marginBottom:10,letterSpacing:0.5}}>
+              📅 15-WEEK ACTIVITY MAP
+            </div>
+            <HeatmapGrid logs={logs} daily={daily} weeks={15}/>
+          </div>
+
+          {/* Peak Day Analysis */}
+          {(()=>{
+            const dayTotals=Array(7).fill(0);const dayCounts=Array(7).fill(0);
+            Object.keys(logs).forEach(k=>{
+              const d=new Date(k);const dow=d.getDay();
+              const done=daily.filter((_,i)=>(logs[k]||{})[i]).length;
+              const pct=daily.length?done/daily.length*100:0;
+              dayTotals[dow]+=pct;dayCounts[dow]++;
+            });
+            const dayAvgs=WD.map((_,i)=>dayCounts[i]?Math.round(dayTotals[i]/dayCounts[i]):0);
+            const best=Math.max(...dayAvgs);
+            return(
+              <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:20,
+                padding:'14px',marginBottom:14,boxShadow:'0 1px 4px rgba(103,80,164,0.07)'}}>
+                <div style={{fontSize:12,fontWeight:800,color:P,marginBottom:10,letterSpacing:0.5}}>
+                  ⚡ PEAK PRODUCTIVITY DAYS
+                </div>
+                <div style={{display:'flex',gap:5,alignItems:'flex-end',height:60}}>
+                  {WD.map((day,i)=>(
+                    <div key={i} style={{flex:1,display:'flex',flexDirection:'column',
+                      alignItems:'center',gap:2}}>
+                      <div style={{fontSize:8,fontWeight:700,color:dayAvgs[i]===best?P:TS}}>
+                        {dayAvgs[i]}%
+                      </div>
+                      <div style={{width:'100%',borderRadius:'3px 3px 0 0',
+                        height:`${Math.max(4,dayAvgs[i])}%`,minHeight:4,
+                        background:dayAvgs[i]===best?`linear-gradient(0deg,${P},#B388FF)`:OL,
+                        transition:'height 0.4s'}}/>
+                      <div style={{fontSize:8,fontWeight:dayAvgs[i]===best?800:500,
+                        color:dayAvgs[i]===best?P:TS}}>{day}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontSize:11,color:P,fontWeight:700,marginTop:8}}>
+                  🌟 Your most productive day: {WD[dayAvgs.indexOf(best)]}
+                </div>
+              </div>
+            );
+          })()}
           {daily.map((h,i)=>{
             const col=hc(i);
             const st=getStreak(logs,i),lg=getLongest(logs,i);
@@ -814,7 +1286,8 @@ function StatsView({daily,logs,revEntries}){
    ═══════════════════════════════════════════════════ */
 function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,todayDone,todayPct,bestStr,avg30,
   gateCountdown,gateDate,setGateDate,todayHours,weekHours,totalHours,
-  showHoursInput,setShowHoursInput,hoursInput,setHoursInput,logHours,darkMode}){
+  showHoursInput,setShowHoursInput,hoursInput,setHoursInput,logHours,darkMode,
+  suggestions,xp,badges}){
   const dueEntries=useMemo(()=>getTodayDueEntries(revEntries),[revEntries]);
   const quote=useMemo(()=>todayQuote(),[]);
   const [editGate,setEditGate]=useState(false);
@@ -1048,6 +1521,30 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,toda
           ))}
         </div>
       </div>
+
+      {/* XP Mini-Card */}
+      <div style={{background:'linear-gradient(135deg,#6750A4,#9C68FF)',
+        borderRadius:18,padding:'12px 16px',marginBottom:12,
+        display:'flex',alignItems:'center',gap:12,
+        boxShadow:'0 4px 16px rgba(103,80,164,0.25)'}}>
+        <div style={{flex:1,color:'#FFF'}}>
+          <div style={{fontSize:10,opacity:0.75,letterSpacing:1,fontWeight:700}}>
+            {getLevelName(xp)} · Level {getLevel(xp)}
+          </div>
+          <div style={{fontSize:11,fontWeight:700,opacity:0.85,marginTop:1}}>
+            {xp} XP · {badges.length}/{ALL_BADGES.length} badges
+          </div>
+          <div style={{height:4,background:'rgba(255,255,255,0.2)',borderRadius:2,marginTop:6,overflow:'hidden'}}>
+            <div style={{height:'100%',width:`${getLevelProgress(xp)}%`,background:'rgba(255,255,255,0.85)',borderRadius:2}}/>
+          </div>
+        </div>
+        <div style={{color:'#FFF',fontSize:28}}>
+          {getLevel(xp)<=2?'🌱':getLevel(xp)<=4?'📖':getLevel(xp)<=6?'🎯':'🏆'}
+        </div>
+      </div>
+
+      {/* Suggestions */}
+      <SuggestionsCard suggestions={suggestions}/>
     </div>
   );
 }
@@ -1059,10 +1556,80 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
   logs,revEntries,wlogs,setWlogs,addType,setAddType,newName,setNewName,doAdd,
   editId,setEditId,editTxt,setEditTxt,saveEdit,delConf,setDelConf,doDelete,
   moveH,pasteOpen,setPasteOpen,pasteTxt,setPasteTxt,doPasteRestore,
-  doExport,doCopy,doFileRestore,fileRef,darkMode,setDarkMode,gateDate,setGateDate}){
+  doExport,doCopy,doFileRestore,fileRef,darkMode,setDarkMode,gateDate,setGateDate,
+  notifEnabled,setNotifEnabled,notifTime,setNotifTime}){
   const [gateInput,setGateInput]=useState(gateDate);
+  const [localNotifTime,setLocalNotifTime]=useState(notifTime);
+
+  const handleNotifToggle=async()=>{
+    if(!notifEnabled){
+      const ok=await requestNotifPermission();
+      if(ok){
+        setNotifEnabled(true);
+        try{localStorage.setItem('habitra_notif','1');}catch(e){}
+        scheduleNotif(notifTime,`${daily.length} habits and ${revEntries.filter(e=>getEntryStatus(e)==='due').length} revisions due today!`);
+      }else{
+        alert('Enable notifications in your browser settings first.');
+      }
+    }else{
+      setNotifEnabled(false);
+      try{localStorage.setItem('habitra_notif','0');}catch(e){}
+    }
+  };
+
+  const handleNotifTimeChange=()=>{
+    setNotifTime(localNotifTime);
+    try{localStorage.setItem('habitra_notif_time',localNotifTime);}catch(e){}
+    if(notifEnabled)scheduleNotif(localNotifTime,'Your daily HABITRA reminder!');
+  };
+
   return(
     <div>
+      {/* Notifications */}
+      <SH ch="🔔 Notifications"/>
+      <div style={{background:'#FFFFFF',borderRadius:20,border:'1px solid #E4DAFB',
+        padding:16,marginBottom:14,boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+          paddingBottom:12,borderBottom:'1px solid #E4DAFB',marginBottom:12}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F'}}>🔔 Daily Reminder</div>
+            <div style={{fontSize:11,color:'#79747E',marginTop:2}}>
+              {notifEnabled?`Notifying at ${notifTime}`:'Get daily habit reminders'}
+            </div>
+          </div>
+          <button onClick={handleNotifToggle}
+            style={{width:48,height:26,borderRadius:13,border:'none',cursor:'pointer',
+              background:notifEnabled?'#6750A4':'#E4DAFB',position:'relative',
+              transition:'background 0.2s',flexShrink:0}}>
+            <div style={{width:20,height:20,borderRadius:'50%',background:'#FFF',
+              position:'absolute',top:3,transition:'left 0.2s',
+              left:notifEnabled?'25px':'3px',boxShadow:'0 1px 4px rgba(0,0,0,0.2)'}}/>
+          </button>
+        </div>
+        {notifEnabled&&(
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <div style={{fontSize:12,fontWeight:700,color:'#49454F',flex:1}}>⏰ Reminder Time</div>
+            <input type="time" value={localNotifTime}
+              onChange={e=>setLocalNotifTime(e.target.value)}
+              style={{border:'2px solid #E4DAFB',borderRadius:10,padding:'7px 10px',
+                fontSize:13,fontWeight:700,color:'#1C1B1F',background:'#F0EAFE',
+                outline:'none',fontFamily:'Nunito,sans-serif'}}/>
+            <button onClick={handleNotifTimeChange}
+              style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',border:'none',
+                borderRadius:10,padding:'8px 14px',color:'#FFF',fontWeight:800,
+                fontSize:12,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
+              Set
+            </button>
+          </div>
+        )}
+        {!notifEnabled&&(
+          <div style={{fontSize:11,color:'#79747E',background:'#F6F0FF',
+            borderRadius:10,padding:'9px 12px',lineHeight:1.5}}>
+            💡 Toggle on to get a daily reminder at your chosen time — no login required. Works when HABITRA is open or installed as PWA.
+          </div>
+        )}
+      </div>
+
       {/* Appearance & GATE Date */}
       <SH ch="Appearance & GATE Settings"/>
       <div style={{background:'#FFFFFF',borderRadius:20,border:'1px solid #E4DAFB',
@@ -1405,6 +1972,14 @@ function App(){
   const [pasteTxt,setPasteTxt]=useState('');
   const [toast,setToast]=useState(null);
   const [syncStatus,setSyncStatus]=useState('loading');
+  const [xp,setXp]=useState(()=>{try{return parseInt(localStorage.getItem('habitra_xp')||'0',10);}catch(e){return 0;}});
+  const [badges,setBadges]=useState(()=>{try{return JSON.parse(localStorage.getItem('habitra_badges')||'[]');}catch(e){return [];}});
+  const [notifEnabled,setNotifEnabled]=useState(()=>{try{return localStorage.getItem('habitra_notif')==='1';}catch(e){return false;}});
+  const [notifTime,setNotifTime]=useState(()=>{try{return localStorage.getItem('habitra_notif_time')||'09:00';}catch(e){return '09:00';}});
+  const [showInstallBanner,setShowInstallBanner]=useState(false);
+  const [deferredInstallPrompt,setDeferredInstallPrompt]=useState(null);
+  const prevXpRef=useRef(xp);
+  const prevBadgesRef=useRef(badges);
   const [darkMode,setDarkMode]=useState(()=>{try{return localStorage.getItem('habitra_dark')==='1';}catch(e){return false;}});
   const [gateDate,setGateDate]=useState(()=>{try{return localStorage.getItem('habitra_gate_date')||'2027-02-01';}catch(e){return '2027-02-01';}});
   const [studyHours,setStudyHours]=useState(()=>{try{const r=localStorage.getItem('habitra_study_hours');return r?JSON.parse(r):{}}catch(e){return {};}});
@@ -1455,6 +2030,73 @@ function App(){
     document.body.classList.toggle('dark',darkMode);
     try{localStorage.setItem('habitra_dark',darkMode?'1':'0');}catch(e){}
   },[darkMode]);
+
+  /* PWA install prompt */
+  useEffect(()=>{
+    const handler=e=>{e.preventDefault();setDeferredInstallPrompt(e);setShowInstallBanner(true);};
+    window.addEventListener('beforeinstallprompt',handler);
+    // Also show if in standalone mode check fails
+    const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
+    if(!isStandalone)setTimeout(()=>setShowInstallBanner(true),3000);
+    return()=>window.removeEventListener('beforeinstallprompt',handler);
+  },[]);
+
+  /* Swipe gesture handler */
+  const touchStartX=useRef(null);
+  const handleTouchStart=useCallback(e=>{touchStartX.current=e.touches[0].clientX;},[]);
+  const handleTouchEnd=useCallback(e=>{
+    if(touchStartX.current===null)return;
+    const dx=e.changedTouches[0].clientX-touchStartX.current;
+    if(Math.abs(dx)<60)return;
+    const VIEWS=['today','monthly','revision','stats','settings'];
+    const ci=VIEWS.indexOf(view);
+    if(dx<0&&ci<VIEWS.length-1)setView(VIEWS[ci+1]);
+    else if(dx>0&&ci>0)setView(VIEWS[ci-1]);
+    touchStartX.current=null;
+  },[view]);
+
+  /* XP tracking — award XP on habit/revision changes */
+  useEffect(()=>{
+    if(isFirstRender.current)return;
+    let gained=0;
+    // Count all completed habits across all days
+    let totalHabitChecks=0;
+    Object.values(logs).forEach(d=>totalHabitChecks+=Object.values(d).filter(Boolean).length);
+    // Count all completed revisions
+    let totalRevChecks=0;
+    revEntries.forEach(e=>totalRevChecks+=REV_INTERVALS.filter(iv=>e.reviews[String(iv)]===true).length);
+    // Count perfect days
+    let perfectDays=0;
+    Object.keys(logs).forEach(k=>{
+      if(daily.length>0&&daily.every((_,i)=>(logs[k]||{})[i]))perfectDays++;
+    });
+    // Hours XP
+    const totalH=Object.values(studyHours).reduce((a,b)=>a+b,0);
+    // Streak bonus
+    const maxStreak=Math.max(0,...daily.map((_,i)=>getStreak(logs,i)));
+
+    const rawXp=totalHabitChecks*XP_REWARDS.habit+perfectDays*XP_REWARDS.allHabits+
+      totalRevChecks*XP_REWARDS.revision+Math.floor(totalH)*XP_REWARDS.studyHour+
+      (maxStreak>=7?XP_REWARDS.streak7:0)+(maxStreak>=30?XP_REWARDS.streak30:0);
+
+    if(rawXp!==xp){
+      setXp(rawXp);
+      try{localStorage.setItem('habitra_xp',String(rawXp));}catch(e){}
+    }
+
+    // Check badges
+    const newBadges=checkBadges({logs,daily,revEntries,studyHours,xp:rawXp,existing:badges});
+    if(newBadges.length!==badges.length){
+      setBadges(newBadges);
+      try{localStorage.setItem('habitra_badges',JSON.stringify(newBadges));}catch(e){}
+      // Show toast for new badge
+      const newOnes=newBadges.filter(b=>!badges.includes(b));
+      if(newOnes.length>0){
+        const b=ALL_BADGES.find(x=>x.id===newOnes[0]);
+        if(b)setTimeout(()=>toast$(`${b.icon} Badge earned: ${b.name}!`),500);
+      }
+    }
+  },[logs,daily,revEntries,studyHours]);
 
   /* Confetti when 100% habits done */
   useEffect(()=>{
@@ -1637,6 +2279,7 @@ function App(){
   }),[logs,daily]);
 
   const dueRevCount=useMemo(()=>getTodayDueEntries(revEntries).length,[revEntries]);
+  const weakSuggestions=useMemo(()=>getWeakSuggestions({revEntries,logs,daily,studyHours}),[revEntries,logs,daily,studyHours]);
   const prevM=()=>vm===0?(setVm(11),setVy(y=>y-1)):setVm(m=>m-1);
   const nextM=()=>vm===11?(setVm(0),setVy(y=>y+1)):setVm(m=>m+1);
 
@@ -1646,6 +2289,7 @@ function App(){
     ['monthly',IC.bar,'Monthly'],
     ['revision',IC.book,'Revise'],
     ['stats',IC.bell,'Stats'],
+    ['achieve','🏆','Achieve'],
     ['settings',IC.gear,'More'],
   ];
 
@@ -1672,11 +2316,40 @@ function App(){
   }
 
   return(
-    <div style={{minHeight:'100vh',background:darkMode?'#1A1625':BG,paddingBottom:80}}>
+    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
+      style={{minHeight:'100vh',background:darkMode?'#1A1625':BG,paddingBottom:80}}>
       {darkMode&&<style>{`
         body{background:#1A1625!important}
         .dark-card{background:#2D2640!important;border-color:#3D3257!important}
       `}</style>}
+
+      {/* PWA INSTALL BANNER */}
+      {showInstallBanner&&!window.matchMedia('(display-mode: standalone)').matches&&(
+        <div style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',
+          padding:'10px 16px',display:'flex',alignItems:'center',gap:10,
+          position:'sticky',top:0,zIndex:50}}>
+          <span style={{fontSize:20}}>📱</span>
+          <div style={{flex:1,color:'#FFF'}}>
+            <div style={{fontSize:12,fontWeight:800}}>Add HABITRA to Home Screen</div>
+            <div style={{fontSize:10,opacity:0.8}}>Works offline • No app store needed</div>
+          </div>
+          <button onClick={async()=>{
+            if(deferredInstallPrompt){
+              deferredInstallPrompt.prompt();
+              const{outcome}=await deferredInstallPrompt.userChoice;
+              setDeferredInstallPrompt(null);
+            }
+            setShowInstallBanner(false);
+          }} style={{background:'rgba(255,255,255,0.25)',border:'1px solid rgba(255,255,255,0.5)',
+            borderRadius:10,padding:'6px 12px',color:'#FFF',fontWeight:800,fontSize:11,
+            cursor:'pointer',fontFamily:'Nunito,sans-serif',flexShrink:0}}>
+            Install
+          </button>
+          <button onClick={()=>setShowInstallBanner(false)}
+            style={{background:'none',border:'none',color:'rgba(255,255,255,0.7)',
+              fontSize:18,cursor:'pointer',padding:'0 4px',lineHeight:1}}>×</button>
+        </div>
+      )}
 
       {/* HEADER */}
       <div style={{background:darkMode?'#2D2640':SUR,padding:'12px 16px 10px',
@@ -1746,7 +2419,9 @@ function App(){
             todayHours={todayHours} weekHours={weekHours} totalHours={totalHours}
             showHoursInput={showHoursInput} setShowHoursInput={setShowHoursInput}
             hoursInput={hoursInput} setHoursInput={setHoursInput} logHours={logHours}
-            darkMode={darkMode}/>
+            darkMode={darkMode}
+            suggestions={weakSuggestions}
+            xp={xp} badges={badges}/>
         )}
         {view==='monthly'&&(
           <MonthlyView daily={daily} logs={logs} vy={vy} vm={vm} T={T} toggleDay={toggleDay}/>
@@ -1760,6 +2435,10 @@ function App(){
         )}
         {view==='stats'&&(
           <StatsView daily={daily} logs={logs} revEntries={revEntries}/>
+        )}
+        {view==='achieve'&&(
+          <GamificationView xp={xp} badges={badges}
+            daily={daily} logs={logs} revEntries={revEntries} studyHours={studyHours}/>
         )}
         {view==='settings'&&(
           <SettingsView daily={daily} weekly={weekly}
@@ -1775,7 +2454,9 @@ function App(){
             pasteTxt={pasteTxt} setPasteTxt={setPasteTxt} doPasteRestore={doPasteRestore}
             doExport={doExport} doCopy={doCopy} doFileRestore={doFileRestore} fileRef={fileRef}
             darkMode={darkMode} setDarkMode={setDarkMode}
-            gateDate={gateDate} setGateDate={setGateDate}/>
+            gateDate={gateDate} setGateDate={setGateDate}
+            notifEnabled={notifEnabled} setNotifEnabled={setNotifEnabled}
+            notifTime={notifTime} setNotifTime={setNotifTime}/>
         )}
       </div>
 
@@ -1818,7 +2499,11 @@ function App(){
               background:view===id?PC:'transparent',
               display:'flex',alignItems:'center',justifyContent:'center',
               transition:'background 0.2s'}}>
-              <Ico d={icon} s={17} c={view===id?P:TS}/>
+              {typeof icon==='string'&&icon.length<=2?(
+                <span style={{fontSize:15}}>{icon}</span>
+              ):(
+                <Ico d={icon} s={17} c={view===id?P:TS}/>
+              )}
             </div>
             <span style={{fontSize:9,fontWeight:view===id?800:500,
               color:view===id?P:TS,letterSpacing:0.1}}>{lbl}</span>
@@ -1827,6 +2512,12 @@ function App(){
                 borderRadius:'50%',background:'#E65100',
                 display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <span style={{fontSize:8,fontWeight:900,color:'#FFF'}}>{dueRevCount>9?'9+':dueRevCount}</span>
+              </div>
+            )}
+            {id==='achieve'&&(
+              <div style={{position:'absolute',top:4,right:'12%',
+                background:P,borderRadius:8,padding:'1px 5px'}}>
+                <span style={{fontSize:7,fontWeight:900,color:'#FFF'}}>Lv{getLevel(xp)}</span>
               </div>
             )}
           </button>
