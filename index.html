@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>HABITRA — Habit + Revision Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <meta name="theme-color" content="#6750A4"/>
@@ -95,16 +95,17 @@ body{font-family:'Nunito','Segoe UI',sans-serif;-webkit-font-smoothing:antialias
 #root{min-height:100vh}
 button,input,textarea,select{font-family:'Nunito','Segoe UI',sans-serif}
 *{-webkit-tap-highlight-color:transparent;outline:none}
-::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:#F0EAFE}
 ::-webkit-scrollbar-thumb{background:#C4B5F4;border-radius:4px}
-.hbtn:active{transform:scale(0.96)}
+.hbtn:active{transform:scale(0.97)}
 input[type="date"]{appearance:none;-webkit-appearance:none}
 body.dark{background:#1A1625}
 body.dark #root{background:#1A1625}
 @keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
 .confetti-piece{position:fixed;width:10px;height:10px;top:-20px;z-index:9999;animation:confetti-fall 2.5s ease-in forwards;border-radius:2px;}
 @keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(103,80,164,0.4)}50%{box-shadow:0 0 0 12px rgba(103,80,164,0)}}
+
 /* ── MINIMALIST CARD SYSTEM ── */
 .card{background:#FFFFFF;border-radius:16px;border:1px solid #EDE8FB;box-shadow:0 1px 6px rgba(103,80,164,0.06);}
 .card-section{padding:14px 16px;}
@@ -120,6 +121,260 @@ body.dark #root{background:#1A1625}
 .hab-row:active{background:#F6F0FF;}
 .section-divider{height:1px;background:#F0EAFE;margin:2px 0;}
 
+/* ══════════════════════════════════════
+   RESPONSIVE LAYOUT SYSTEM
+   Mobile  : <601px   — bottom nav, full width
+   Tablet  : 601-1024px — wider content, no structural change
+   Desktop : >1024px  — sidebar nav, two-column where useful
+══════════════════════════════════════ */
+
+/* ── APP SHELL ── */
+.app-shell{min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+.app-header{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px 10px;
+  border-bottom:1px solid var(--ol,#E4DAFB);
+  box-shadow:0 2px 10px rgba(103,80,164,0.09);
+}
+
+/* ── SIDEBAR NAV (desktop only) ── */
+.sidebar-nav{display:none;}
+
+/* ── BOTTOM NAV (mobile/tablet) ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  display:flex;z-index:25;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  box-shadow:0 -2px 14px rgba(103,80,164,0.09);
+}
+
+/* ── MAIN LAYOUT ── */
+.main-layout{display:flex;flex:1;}
+.main-content{
+  flex:1;
+  padding:14px 14px 0;
+  max-width:540px;
+  margin:0 auto;
+  width:100%;
+  padding-bottom:90px; /* space for bottom nav */
+}
+
+/* ── TABLET (601–1024px) ── */
+@media(min-width:601px){
+  .app-header{padding:14px 24px 12px;}
+  .main-content{
+    max-width:680px;
+    padding:18px 24px 0;
+    padding-bottom:90px;
+  }
+  .app-header .header-title-main{font-size:18px;}
+  .app-header .header-title-sub{font-size:11px;}
+  /* Wider cards on tablet */
+  .card{border-radius:20px;}
+  .bottom-nav button{padding:10px 4px 8px;}
+  /* Two-column grid for stat cards on tablet */
+  .responsive-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  /* FAB bigger on tablet */
+  .fab-btn{width:58px!important;height:58px!important;bottom:90px!important;right:24px!important;}
+}
+
+/* ── DESKTOP (>1024px) ── */
+@media(min-width:1025px){
+  body{overflow-x:hidden;}
+  .app-header{padding:16px 32px 14px;max-width:none;}
+  .app-header .header-title-main{font-size:20px;}
+
+  /* Show sidebar, hide bottom nav */
+  .sidebar-nav{
+    display:flex;
+    flex-direction:column;
+    position:fixed;
+    left:0;top:0;bottom:0;
+    width:220px;
+    padding:80px 12px 24px;
+    z-index:20;
+    gap:4px;
+    border-right:1px solid #EDE8FB;
+    overflow-y:auto;
+  }
+  .bottom-nav{display:none!important;}
+
+  /* Offset content for sidebar */
+  .main-layout{margin-left:220px;}
+  .main-content{
+    max-width:760px;
+    padding:24px 32px 0;
+    padding-bottom:40px;
+    margin:0 auto;
+  }
+
+  /* Desktop: content columns */
+  .desktop-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+  .desktop-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+  /* Larger interactive elements */
+  .hbtn:hover{background:rgba(103,80,164,0.06)!important;}
+  .soft-btn{padding:9px 16px;font-size:13px;}
+  .card{border-radius:22px;}
+
+  /* FAB repositioned for desktop */
+  .fab-btn{right:calc(50% - 380px - 24px - 220px)!important;bottom:32px!important;}
+}
+
+/* ── DARK MODE ── */
+body.dark{background:#0F0D14!important;}
+body.dark #root{background:#0F0D14!important;}
+body.dark .sidebar-nav{background:#1A1726;border-right-color:#2E2842;}
+body.dark .app-header{background:#1A1726;border-bottom-color:#2E2842;}
+body.dark .card{background:#1E1B2E!important;border-color:#2E2842!important;}
+body.dark .strip{border-bottom-color:#2A2540!important;}
+body.dark .stat-pill{background:#2A2540!important;color:#C4B5F4!important;}
+body.dark .mini-tag{background:#2D2050!important;color:#A78BFA!important;}
+body.dark .soft-btn{background:#2A2540!important;color:#C4B5F4!important;}
+body.dark .soft-btn:hover{background:#332E55!important;}
+body.dark .hab-row{border-bottom-color:#1E1B2E!important;}
+body.dark .hab-row:active{background:#2A2540!important;}
+body.dark .section-divider{background:#2E2842!important;}
+body.dark ::-webkit-scrollbar-track{background:#1A1726;}
+body.dark ::-webkit-scrollbar-thumb{background:#3D3260;}
+
+/* ── DARK MODE: TEXT & TYPOGRAPHY ── */
+body.dark .section-label{color:#9B93C8!important;}
+body.dark .snav-btn{color:#C4B5F4;}
+body.dark .snav-btn.active{color:#EAE6FF;}
+
+/* ── DARK MODE: INPUTS & FORMS ── */
+body.dark input,
+body.dark textarea,
+body.dark select{
+  background:#211E30!important;
+  color:#EAE6FF!important;
+  border-color:#2E2842!important;
+  color-scheme:dark;
+}
+body.dark input::placeholder,
+body.dark textarea::placeholder{color:#5A5474!important;}
+/* Catch-all: any form element inside dark mode gets dark styling */
+body.dark input:not([type='range']):not([type='checkbox']):not([type='radio']):not([type='file']),
+body.dark textarea,
+body.dark select{
+  background:#211E30!important;
+  color:#EDE9FF!important;
+  border-color:#2E2842!important;
+}
+
+/* ── DARK MODE: STAT / SUMMARY CARDS WITH HARDCODED LIGHT GRADIENTS ── */
+/* Revision due/complete summary cards */
+body.dark .rev-summary-due{
+  background:linear-gradient(135deg,#2A1A00,#3A2600)!important;
+  border-color:#5A3800!important;
+}
+body.dark .rev-summary-done{
+  background:linear-gradient(135deg,#0D2010,#152A18)!important;
+  border-color:#1E4025!important;
+}
+/* Stats habit best-streak & avg30 */
+body.dark .stats-beststreak{
+  background:linear-gradient(135deg,#1E1835,#2A2050)!important;
+  border-color:#3D3260!important;
+}
+body.dark .stats-avg30{
+  background:linear-gradient(135deg,#0D2010,#152A18)!important;
+  border-color:#1E4025!important;
+}
+/* Weekly goal summary card */
+body.dark .weekly-summary{
+  background:linear-gradient(135deg,#0D2010,#152A18)!important;
+  border-color:#1E4025!important;
+}
+
+/* ── DARK MODE: HEATMAP ── */
+body.dark .subject-heatmap-cell-none{background:#1E1B2E!important;color:#4A4568!important;}
+
+/* ── DARK MODE: SUGGESTION CARD ITEMS ── */
+body.dark .suggestion-item{
+  background:#1E1B2E!important;
+  border-color:#2E2842!important;
+}
+
+/* ── DARK MODE: DELETE CONFIRM MODAL ── */
+body.dark .del-warning-box{
+  background:#2A1010!important;
+  border-color:#4A2020!important;
+}
+
+/* ── DARK MODE: BACKUP SECTION ── */
+body.dark .backup-info-box{
+  background:#1E1B2E!important;
+  color:#B0A8CC!important;
+}
+body.dark .backup-btn-json{background:#2A2050!important;color:#C4B5F4!important;}
+body.dark .backup-btn-restore{background:#0D2010!important;color:#81C784!important;}
+body.dark .backup-btn-paste{background:#2A1800!important;color:#FFB74D!important;}
+
+/* ── DARK MODE: ABSENCE HISTORY ITEMS ── */
+/* keep the colored bg but darken it substantially */
+body.dark .absence-history-item{filter:brightness(0.35) saturate(0.8);}
+body.dark .absence-summary-box{background:#2A1010!important;border-color:#4A2020!important;}
+
+/* ── DARK MODE: TAB BARS ── */
+body.dark .tab-bar-active{background:#2A2540!important;color:#C4B5F4!important;}
+
+/* ── DARK MODE: SNAV BADGE ── */
+body.dark .snav-badge{background:#2A2540;color:#C4B5F4;}
+
+/* ── DARK MODE: ADDITIONAL FIXES ── */
+/* Subject mastery heatmap 'Not started' text */
+body.dark .subject-heatmap-cell-none span{color:#5A5474!important;}
+/* Task form inputs - catch any missed */
+body.dark .task-form-input{background:#211E30!important;color:#EDE9FF!important;border-color:#332F50!important;}
+/* Hours stats cards text visibility */
+body.dark .hours-self-card div{color:#A5D6A7!important;}
+body.dark .hours-class-card div{color:#90CAF9!important;}
+/* Heatmap legend text */
+body.dark .heatmap-legend-text{color:#9990BE!important;}
+/* Weekly performance week row */
+body.dark .week-report-row{background:#1E1B2E!important;border-color:#2E2842!important;}
+/* Section label global */
+body.dark .sh-label{color:#9B93C8!important;}
+/* Suggestion action text */
+body.dark .suggestion-action{color:#9990BE!important;}
+/* Badge descriptions in dark mode */
+body.dark .badge-desc{color:#9990BE!important;}
+/* Absence banner */
+body.dark .absence-banner-box{background:#1E1B2E!important;border-color:#2E2842!important;}
+/* Backup info box */  
+body.dark .backup-info-box{background:#1E1B2E!important;color:#C4B5F4!important;}
+
+/* ── SIDEBAR NAV BUTTON STYLES ── */
+.snav-btn{
+  display:flex;align-items:center;gap:10px;
+  width:100%;padding:10px 14px;
+  border:none;border-radius:14px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;
+  text-align:left;background:transparent;transition:background 0.15s;
+}
+.snav-btn.active{font-weight:800;}
+.snav-btn:hover:not(.active){background:rgba(103,80,164,0.07);}
+.snav-badge{
+  margin-left:auto;min-width:20px;height:18px;
+  border-radius:9px;padding:0 5px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:900;
+}
+
+/* Responsive font scaling */
+@media(min-width:601px){
+  .section-label{font-size:11px;}
+  .stat-pill{font-size:12px;}
+}
+@media(min-width:1025px){
+  .section-label{font-size:12px;}
+  .stat-pill{font-size:13px;padding:4px 12px;}
+}
 </style>
 </head>
 <body>
@@ -243,11 +498,25 @@ let HCOLS=[
   {bg:'#E3F2FD',f:'#1565C0',dk:'#001E3C',lt:'#EFF6FE'},
 ];
 const hc=i=>HCOLS[i%6];
-function applyPalette(id){
+function applyPalette(id,darkMode=false){
   const t=THEME_PALETTES[id]||THEME_PALETTES.classic;
-  P=t.primary;P2=t.primary2;PC=t.container;BG=t.bg;SUR=t.surface;SV=t.surfaceVariant;OL=t.outline;
+  P=t.primary;P2=t.primary2;
   HCOLS=t.habitColors;
-  try{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.primary);}catch(e){}
+  if(darkMode){
+    PC='rgba(255,255,255,0.12)';
+    BG='#0F0D14';
+    SUR='#1A1726';
+    SV='#221F33';
+    OL='#332F50';
+    TX='#EDE9FF';
+    TM='#C4BDED';
+    TS='#9990BE';
+  }else{
+    PC=t.container;
+    BG=t.bg;SUR=t.surface;SV=t.surfaceVariant;OL=t.outline;
+    TX='#1C1B1F';TM='#49454F';TS='#79747E';
+  }
+  try{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',darkMode?'#0F0D14':t.primary);}catch(e){}
   return t;
 }
 
@@ -540,8 +809,8 @@ function HeatmapGrid({logs,daily,weeks=15}){
   },[cells]);
 
   const cellColor=pct=>{
-    if(pct===0)return '#EDE7FF';
-    if(pct<0.4)return '#C4B5F4';
+    if(pct===0)return OL;
+    if(pct<0.4)return '#6B5B9E';
     if(pct<0.7)return P2;
     if(pct<1)return P;
     return '#2E7D32';
@@ -564,11 +833,11 @@ function HeatmapGrid({logs,daily,weeks=15}){
         ))}
       </div>
       <div style={{display:'flex',alignItems:'center',gap:4,marginTop:7,justifyContent:'flex-end'}}>
-        <span style={{fontSize:9,color:'#79747E'}}>Less</span>
+        <span style={{fontSize:9,color:TS}}>Less</span>
         {[0,0.3,0.6,0.9,1].map(p=>(
           <div key={p} style={{width:10,height:10,borderRadius:2,background:cellColor(p)}}/>
         ))}
-        <span style={{fontSize:9,color:'#79747E'}}>More</span>
+        <span style={{fontSize:9,color:TS}}>More</span>
       </div>
     </div>
   );
@@ -638,42 +907,42 @@ function GamificationView({xp,badges,daily,logs,revEntries,studyHours}){
       </div>
 
       {/* XP Source Guide */}
-      <div style={{background:'#FFFFFF',border:'1px solid #E4DAFB',borderRadius:18,
+      <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:18,
         padding:'14px',marginBottom:14,boxShadow:'0 1px 4px rgba(103,80,164,0.07)'}}>
-        <div style={{fontSize:12,fontWeight:800,color:'#6750A4',marginBottom:10,letterSpacing:0.5}}>⚡ HOW TO EARN XP</div>
+        <div style={{fontSize:12,fontWeight:800,color:P,marginBottom:10,letterSpacing:0.5}}>⚡ HOW TO EARN XP</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7}}>
           {[
             ['✅ Each habit done','5 XP'],['🌟 All habits done','25 XP'],
             ['📚 Revision done','10 XP'],['⏰ Per study hour','8 XP'],
             ['🔥 7-day streak','50 XP'],['💎 30-day streak','200 XP'],
           ].map(([label,val])=>(
-            <div key={label} style={{background:'#F6F0FF',borderRadius:10,
+            <div key={label} style={{background:SV,borderRadius:10,
               padding:'8px 10px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontSize:11,fontWeight:600,color:'#49454F'}}>{label}</span>
-              <span style={{fontSize:12,fontWeight:900,color:'#6750A4'}}>{val}</span>
+              <span style={{fontSize:11,fontWeight:600,color:TM}}>{label}</span>
+              <span style={{fontSize:12,fontWeight:900,color:P}}>{val}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Badges */}
-      <div style={{fontSize:13,fontWeight:800,color:'#1C1B1F',marginBottom:10}}>
+      <div style={{fontSize:13,fontWeight:800,color:TX,marginBottom:10}}>
         🏅 Badges — {earnedSet.size}/{ALL_BADGES.length} earned
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginBottom:14}}>
         {ALL_BADGES.map(b=>{
           const earned=earnedSet.has(b.id);
           return(
-            <div key={b.id} style={{background:earned?'#FFFFFF':'#F6F0FF',
-              border:`2px solid ${earned?'#C4B5F4':'#E4DAFB'}`,
+            <div key={b.id} style={{background:earned?SUR:SV,
+              border:`2px solid ${earned?OL+'99':OL+'44'}`,
               borderRadius:16,padding:'11px 12px',
               opacity:earned?1:0.55,
-              boxShadow:earned?'0 2px 10px rgba(103,80,164,0.12)':'none',
+              boxShadow:earned?`0 2px 10px rgba(103,80,164,0.12)`:'none',
               transition:'all 0.2s'}}>
               <div style={{fontSize:22,marginBottom:5}}>{b.icon}</div>
-              <div style={{fontSize:12,fontWeight:800,color:earned?'#1C1B1F':'#79747E'}}>{b.name}</div>
-              <div style={{fontSize:10,color:'#79747E',marginTop:2,lineHeight:1.4}}>{b.desc}</div>
-              {earned&&<div style={{fontSize:9,color:'#6750A4',fontWeight:800,marginTop:4}}>✓ EARNED</div>}
+              <div style={{fontSize:12,fontWeight:800,color:earned?TX:TS}}>{b.name}</div>
+              <div style={{fontSize:10,color:TS,marginTop:2,lineHeight:1.4}}>{b.desc}</div>
+              {earned&&<div style={{fontSize:9,color:P,fontWeight:800,marginTop:4}}>✓ EARNED</div>}
             </div>
           );
         })}
@@ -687,31 +956,31 @@ function SuggestionsCard({suggestions}){
   const [open,setOpen]=useState(false);
   if(!suggestions.length)return null;
   return(
-    <div style={{background:'#FFFFFF',border:'2px solid #E4DAFB',
+    <div style={{background:SUR,border:`2px solid ${OL}`,
       borderRadius:20,padding:'13px',marginBottom:12,
       boxShadow:'0 2px 12px rgba(103,80,164,0.1)'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
         marginBottom:open?10:0}}>
-        <div style={{fontSize:13,fontWeight:900,color:'#6750A4',display:'flex',gap:6,alignItems:'center'}}>
+        <div style={{fontSize:13,fontWeight:900,color:P,display:'flex',gap:6,alignItems:'center'}}>
           💡 Smart Suggestions
-          <span style={{background:'#EDE7FF',color:'#6750A4',fontSize:10,fontWeight:800,
+          <span style={{background:SV,color:P,fontSize:10,fontWeight:800,
             padding:'2px 7px',borderRadius:10}}>{suggestions.length}</span>
         </div>
         <button onClick={()=>setOpen(v=>!v)}
-          style={{background:'#F0EAFE',border:'none',borderRadius:10,
-            padding:'4px 10px',cursor:'pointer',fontSize:11,fontWeight:700,color:'#6750A4',
+          style={{background:SV,border:'none',borderRadius:10,
+            padding:'4px 10px',cursor:'pointer',fontSize:11,fontWeight:700,color:P,
             fontFamily:'Nunito,sans-serif'}}>
           {open?'Hide':'Show'}
         </button>
       </div>
       {open&&suggestions.map((s,i)=>(
-        <div key={i} style={{background:s.bg,border:`1px solid ${s.border}`,
+        <div key={i} className="suggestion-item" style={{background:s.bg,border:`1px solid ${s.border}`,
           borderRadius:13,padding:'10px 12px',marginBottom:7,
           display:'flex',gap:9,alignItems:'flex-start'}}>
           <span style={{fontSize:16,flexShrink:0,marginTop:1}}>{s.icon}</span>
           <div style={{flex:1}}>
             <div style={{fontSize:12,fontWeight:700,color:s.color,lineHeight:1.4}}>{s.msg}</div>
-            <div style={{fontSize:10,color:'#79747E',marginTop:3}}>👉 {s.action}</div>
+            <div style={{fontSize:10,color:TS,marginTop:3}}>👉 {s.action}</div>
           </div>
         </div>
       ))}
@@ -826,7 +1095,7 @@ const Ring=({pct,size=100,color='#7C4DFF'})=>{
   );
 };
 const SH=({ch})=>(
-  <div style={{fontSize:10,fontWeight:700,color:'#9E9E9E',letterSpacing:1.5,
+  <div style={{fontSize:10,fontWeight:700,color:TS,letterSpacing:1.5,
     textTransform:'uppercase',marginBottom:8,paddingLeft:2}}>{ch}</div>
 );
 const IB=({ch,onClick,dis=false,bg=SV})=>(
@@ -910,19 +1179,20 @@ function RevisionCard({entry,onToggle,onDelete,compact=false}){
               const due=isRevDueToday(entry,iv);
               const over=isRevOverdue(entry,iv);
               const done=val===true;
-              const bg=done?'#E8F5E9':over?'#FFEBEE':due?'#FFF3E0':SV;
-              const border=done?'#43A047':over?'#EF9A9A':due?'#FFB74D':OL;
-              const tc=done?'#2E7D32':over?'#C62828':due?'#E65100':TS;
+              const bg=done?SV:over?SV:due?SV:SV;
+              const bgExtra=done?'inset 0 0 0 2px #43A04733':over?'inset 0 0 0 2px #EF535033':due?'inset 0 0 0 2px #FFB74D33':'none';
+              const border=done?'#43A047':over?'#EF5350':due?'#FFB74D':OL;
+              const tc=done?'#43A047':over?'#EF5350':due?'#FFB74D':TS;
               return(
                 <button key={iv} onClick={()=>onToggle(entry.id,iv)}
                   style={{background:bg,border:`2px solid ${border}`,
+                    boxShadow:bgExtra,
                     borderRadius:12,padding:'6px 10px',cursor:'pointer',
                     textAlign:'center',minWidth:62,transition:'all 0.15s',
                     fontFamily:'Nunito,sans-serif'}}>
                   <div style={{fontSize:10,fontWeight:700,color:tc}}>{REV_LABELS[iv]}</div>
                   <div style={{fontSize:9,color:tc,marginTop:1,opacity:0.8}}>{fmtDate(rd)}</div>
-                  <div style={{fontSize:11,fontWeight:800,marginTop:2,
-                    color:done?'#2E7D32':over?'#C62828':due?'#E65100':'#BDBDBD'}}>
+                  <div style={{fontSize:11,fontWeight:800,marginTop:2,color:tc}}>
                     {done?'✓':over?'!':due?'→':'○'}
                   </div>
                 </button>
@@ -956,6 +1226,11 @@ function RevisionCard({entry,onToggle,onDelete,compact=false}){
   );
 }
 
+const getLBL=()=>({fontSize:11,fontWeight:700,color:TS,display:'block',marginBottom:5,letterSpacing:0.3});
+const getINPS=(extra={})=>({width:'100%',border:`2px solid ${OL}`,borderRadius:12,padding:'10px 12px',
+  fontSize:13,color:TX,background:SV,boxSizing:'border-box',fontWeight:600,
+  fontFamily:'Nunito,sans-serif',outline:'none',...extra});
+
 /* ── AddRevisionModal ───────────────────────────────*/
 function AddRevisionModal({onAdd,onClose}){
   const [subj,setSubj]=useState('SOM');
@@ -982,7 +1257,7 @@ function AddRevisionModal({onAdd,onClose}){
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
         <div>
-          <label style={LBL}>Subject</label>
+          <label style={getLBL()}>Subject</label>
           <div style={{display:'flex',gap:7,flexWrap:'wrap',marginBottom:subj==='Other'?8:0}}>
             {GATE_SUBJECTS.map(s=>(
               <button key={s} onClick={()=>setSubj(s)}
@@ -998,36 +1273,36 @@ function AddRevisionModal({onAdd,onClose}){
           {subj==='Other'&&(
             <input value={customSubj} onChange={e=>setCustomSubj(e.target.value)}
               placeholder="Enter subject name"
-              style={INPS}/>
+              style={getINPS()}/>
           )}
         </div>
         <div>
-          <label style={LBL}>Topic / Chapter (optional)</label>
+          <label style={getLBL()}>Topic / Chapter (optional)</label>
           <input value={topic} onChange={e=>setTopic(e.target.value)}
             placeholder="e.g. Bending Stress, Mohr's Circle"
-            style={INPS}/>
+            style={getINPS()}/>
         </div>
         <div style={{display:'flex',gap:10}}>
           <div style={{flex:1}}>
-            <label style={LBL}>Pages (optional)</label>
+            <label style={getLBL()}>Pages (optional)</label>
             <input value={pages} onChange={e=>setPages(e.target.value)}
               placeholder="e.g. 45-67"
-              style={INPS}/>
+              style={getINPS()}/>
           </div>
           <div style={{flex:1}}>
-            <label style={LBL}>Date Studied</label>
+            <label style={getLBL()}>Date Studied</label>
             <input type="date" value={date} onChange={e=>setDate(e.target.value)}
-              style={INPS}/>
+              style={getINPS()}/>
           </div>
         </div>
         <div>
-          <label style={LBL}>Quick Notes (optional)</label>
+          <label style={getLBL()}>Quick Notes (optional)</label>
           <textarea value={notes} onChange={e=>setNotes(e.target.value)}
             placeholder="Key concepts, doubts, formulas to remember…"
-            style={{...INPS,height:70,resize:'none'}}/>
+            style={getINPS({height:70,resize:'none'})}/>
         </div>
-        <div style={{background:'#E8F5E9',borderRadius:12,padding:'10px 12px',
-          fontSize:11,color:'#2E7D32',lineHeight:1.6}}>
+        <div style={{background:SV,borderLeft:'3px solid #43A047',borderRadius:12,padding:'10px 12px',
+          fontSize:11,color:TM,lineHeight:1.6}}>
           🔁 System will auto-schedule reviews at: <b>Same Day → Day 3 → Day 6 → Day 30 → Day 60 → Day 90</b>
         </div>
         <div style={{display:'flex',gap:9,marginTop:4}}>
@@ -1051,11 +1326,6 @@ function AddRevisionModal({onAdd,onClose}){
     </BSModal>
   );
 }
-
-const LBL={fontSize:11,fontWeight:700,color:TS,display:'block',marginBottom:5,letterSpacing:0.3};
-const INPS={width:'100%',border:`2px solid ${OL}`,borderRadius:12,padding:'10px 12px',
-  fontSize:13,color:TX,background:SV,boxSizing:'border-box',fontWeight:600,
-  fontFamily:'Nunito,sans-serif',outline:'none'};
 
 /* ═══════════════════════════════════════════════════
    REVISION VIEW (full tab)
@@ -1088,14 +1358,14 @@ function RevisionView({entries,onToggle,onDelete,onAdd}){
     <div>
       {/* summary cards */}
       <div style={{display:'flex',gap:9,marginBottom:14}}>
-        <div style={{flex:1,background:'linear-gradient(135deg,#FFF3E0,#FFE0B2)',
+        <div className="rev-due-card" style={{flex:1,background:'linear-gradient(135deg,#FFF3E0,#FFE0B2)',
           borderRadius:18,padding:'13px',border:'1px solid #FFB74D',
           boxShadow:'0 2px 10px rgba(255,152,0,0.15)'}}>
           <div style={{fontSize:10,fontWeight:700,color:'#E65100',letterSpacing:1}}>DUE / OVERDUE</div>
           <div style={{fontSize:28,fontWeight:900,color:'#E65100',lineHeight:1.1}}>{dueCount}</div>
           <div style={{fontSize:11,color:'#F57C00'}}>topics need review</div>
         </div>
-        <div style={{flex:1,background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
+        <div className="rev-done-card" style={{flex:1,background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
           borderRadius:18,padding:'13px',border:'1px solid #A5D6A7',
           boxShadow:'0 2px 10px rgba(56,142,60,0.12)'}}>
           <div style={{fontSize:10,fontWeight:700,color:'#2E7D32',letterSpacing:1}}>COMPLETE</div>
@@ -1247,13 +1517,13 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
 
       {stab==='habits'&&(
         <div>
-          <div style={{display:'flex',gap:9,marginBottom:14}}>
-            <div style={{flex:1,background:`linear-gradient(135deg,${PC},#DDD8FF)`,
+            <div style={{display:'flex',gap:9,marginBottom:14}}>
+            <div className="stats-streak-card" style={{flex:1,background:`linear-gradient(135deg,${PC},#DDD8FF)`,
               borderRadius:18,padding:'14px',border:`1px solid ${OL}`}}>
               <div style={{fontSize:10,fontWeight:700,color:P,letterSpacing:1}}>BEST STREAK</div>
               <div style={{fontSize:30,fontWeight:900,color:P}}>{bestStr}d</div>
             </div>
-            <div style={{flex:1,background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
+            <div className="stats-avg30-card" style={{flex:1,background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
               borderRadius:18,padding:'14px',border:'1px solid #A5D6A7'}}>
               <div style={{fontSize:10,fontWeight:700,color:'#2E7D32',letterSpacing:1}}>30D AVG</div>
               <div style={{fontSize:30,fontWeight:900,color:'#2E7D32'}}>{avg30}%</div>
@@ -1404,18 +1674,18 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
           <div>
             <SH ch="Weekly Performance — Last 8 Weeks"/>
             {weeks.map(({label,avg,wk},i)=>(
-              <div key={wk} style={{background:'#FFFFFF',border:'1px solid #E4DAFB',
+              <div key={wk} style={{background:SUR,border:`1px solid ${OL}`,
                 borderRadius:18,padding:'12px 16px',marginBottom:9,
                 boxShadow:'0 1px 4px rgba(103,80,164,0.07)'}}>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
                   <div>
-                    <div style={{fontSize:13,fontWeight:700,color:'#1C1B1F'}}>{label}</div>
-                    <div style={{fontSize:10,color:'#79747E'}}>{wk}</div>
+                    <div style={{fontSize:13,fontWeight:700,color:TX}}>{label}</div>
+                    <div style={{fontSize:10,color:TS}}>{wk}</div>
                   </div>
                   <div style={{fontSize:24,fontWeight:900,
                     color:avg>=80?'#2E7D32':avg>=50?'#F57C00':'#C62828'}}>{avg}%</div>
                 </div>
-                <div style={{height:8,background:'#E4DAFB',borderRadius:4,overflow:'hidden'}}>
+                <div style={{height:8,background:OL,borderRadius:4,overflow:'hidden'}}>
                   <div style={{height:'100%',borderRadius:4,transition:'width 0.5s',
                     background:avg>=80?'linear-gradient(90deg,#43A047,#66BB6A)':avg>=50?'linear-gradient(90deg,#F57C00,#FFB74D)':'linear-gradient(90deg,#E53935,#EF9A9A)',
                     width:`${avg}%`}}/>
@@ -1452,11 +1722,12 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
           return Math.max(0,Math.min(100,sc));
         };
         const hCol=(h)=>{
-          if(h<0)return{bg:'#F0F0F0',text:'#AAAAAA',label:'None',dot:'#CCCCCC'};
-          if(h>=80)return{bg:'#D6EDDA',text:'#2E7D32',label:'Strong',dot:'#43A047'};
-          if(h>=55)return{bg:'#FFF3CD',text:'#B57700',label:'OK',dot:'#F9A825'};
-          if(h>=30)return{bg:'#FFE5CC',text:'#B85C00',label:'Weak',dot:'#F57C00'};
-          return{bg:'#FFDDDD',text:'#C62828',label:'Critical',dot:'#E53935'};
+          const isDk=document.body.classList.contains('dark');
+          if(h<0)return{bg:isDk?'#1E1B2E':'#F0F0F0',text:isDk?'#5A5474':'#AAAAAA',label:'None',dot:'#666666'};
+          if(h>=80)return{bg:isDk?'#0D2010':'#D6EDDA',text:isDk?'#81C784':'#2E7D32',label:'Strong',dot:'#43A047'};
+          if(h>=55)return{bg:isDk?'#2A2000':'#FFF3CD',text:isDk?'#FFD54F':'#B57700',label:'OK',dot:'#F9A825'};
+          if(h>=30)return{bg:isDk?'#2A1500':'#FFE5CC',text:isDk?'#FFB74D':'#B85C00',label:'Weak',dot:'#F57C00'};
+          return{bg:isDk?'#2A0808':'#FFDDDD',text:isDk?'#EF9A9A':'#C62828',label:'Critical',dot:'#E53935'};
         };
         const allSubjs=GATE_SUBJECTS.filter(s=>s!=='Other');
         return(
@@ -1528,14 +1799,14 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
           <div>
             {/* Summary cards */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-              <div style={{background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
+              <div className="hours-self-card" style={{background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
                 border:'1px solid #A5D6A7',borderRadius:16,padding:'12px 14px'}}>
                 <div style={{fontSize:9,fontWeight:800,color:'#2E7D32',letterSpacing:1,
                   textTransform:'uppercase',marginBottom:4}}>30D SELF-STUDY</div>
                 <div style={{fontSize:26,fontWeight:900,color:'#1B5E20'}}>{totalSelf}h</div>
                 <div style={{fontSize:10,color:'#388E3C',marginTop:1}}>{daysLogged} days logged · avg {avgSelf}h/day</div>
               </div>
-              <div style={{background:'linear-gradient(135deg,#E3F2FD,#BBDEFB)',
+              <div className="hours-class-card" style={{background:'linear-gradient(135deg,#E3F2FD,#BBDEFB)',
                 border:'1px solid #90CAF9',borderRadius:16,padding:'12px 14px'}}>
                 <div style={{fontSize:9,fontWeight:800,color:'#1565C0',letterSpacing:1,
                   textTransform:'uppercase',marginBottom:4}}>30D CLASS</div>
@@ -1548,12 +1819,12 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
 
             {/* Achievement badges row */}
             <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
-              <div style={{background:daysExceeded>0?'#E3F2FD':'#F5F5F5',border:`1px solid ${daysExceeded>0?'#90CAF9':'#E0E0E0'}`,
+              <div style={{background:daysExceeded>0?'#E3F2FD':SV,border:`1px solid ${daysExceeded>0?'#90CAF9':OL}`,
                 borderRadius:12,padding:'6px 10px',textAlign:'center',flex:1,minWidth:80}}>
                 <div style={{fontSize:18,fontWeight:900,color:daysExceeded>0?'#1565C0':'#9E9E9E'}}>{daysExceeded}</div>
                 <div style={{fontSize:9,fontWeight:700,color:daysExceeded>0?'#1565C0':'#9E9E9E'}}>🚀 Excellent Days</div>
               </div>
-              <div style={{background:daysPerfect>0?'#E8F5E9':'#F5F5F5',border:`1px solid ${daysPerfect>0?'#81C784':'#E0E0E0'}`,
+              <div style={{background:daysPerfect>0?'#E8F5E9':SV,border:`1px solid ${daysPerfect>0?'#81C784':OL}`,
                 borderRadius:12,padding:'6px 10px',textAlign:'center',flex:1,minWidth:80}}>
                 <div style={{fontSize:18,fontWeight:900,color:daysPerfect>0?'#2E7D32':'#9E9E9E'}}>{daysPerfect}</div>
                 <div style={{fontSize:9,fontWeight:700,color:daysPerfect>0?'#2E7D32':'#9E9E9E'}}>🏆 Best Best Days</div>
@@ -1601,7 +1872,7 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
                   const barColor=exceeded?'linear-gradient(0deg,#1565C0,#64B5F6)'
                     :perfect?'linear-gradient(0deg,#2E7D32,#66BB6A)'
                     :h>0?'linear-gradient(0deg,#E65100,#FFCC80)'
-                    :'#EEEEEE';
+                    :SV;
                   return(
                     <div key={d.k} style={{flex:1,display:'flex',flexDirection:'column',
                       alignItems:'center',gap:1}}>
@@ -1648,8 +1919,9 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
                 :perfect?'Best Best! Perfect 6-hour day!'
                 :belowGoal?`${Math.round((IDEAL_STUDY_HOURS-h)*10)/10}h short — scope for improvement`
                 :'No study logged';
-              const bg=exceeded?'#EBF5FB':perfect?'#E9F7EF':belowGoal?'#FEF9E7':'#FAFAFA';
-              const border=exceeded?'#AED6F1':perfect?'#A9DFBF':belowGoal?'#FAD7A0':'#EEEEEE';
+              const isDkM=document.body.classList.contains('dark');
+              const bg=exceeded?(isDkM?'#0A1A30':'#EBF5FB'):perfect?(isDkM?'#0D2010':'#E9F7EF'):belowGoal?(isDkM?'#2A1800':'#FEF9E7'):(isDkM?SV:'#FAFAFA');
+              const border=exceeded?'#AED6F1':perfect?'#A9DFBF':belowGoal?'#FAD7A0':OL;
               const statusColor=exceeded?'#1565C0':perfect?'#196F3D':belowGoal?'#CA6F1E':'#9E9E9E';
               return(
                 <div key={d.k} style={{background:bg,border:`1.5px solid ${border}`,
@@ -1671,7 +1943,7 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
                       <div style={{height:'100%',borderRadius:2,
                         background:exceeded?'linear-gradient(90deg,#1565C0,#64B5F6)'
                           :perfect?'linear-gradient(90deg,#2E7D32,#66BB6A)'
-                          :belowGoal?'linear-gradient(90deg,#E65100,#FFCC80)':'#EEEEEE',
+                          :belowGoal?'linear-gradient(90deg,#E65100,#FFCC80)':SV,
                         width:`${Math.min((h/IDEAL_STUDY_HOURS)*100,100)}%`,
                         transition:'width 0.5s'}}/>
                     </div>
@@ -1691,191 +1963,193 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
 
 /* ═══════════════════════════════════════════════════
    FLASHCARD STATUS MODAL
+   Uses an OFFSCREEN 900×1200 canvas (never shown in DOM)
+   → direct toBlob download = always crisp, no blurry
+     preview-canvas scaling issues ever again.
    ═══════════════════════════════════════════════════ */
 function FlashcardModal({onClose,daily,logs,TK,revEntries,xp,badges,totalHours,weekHours,gateCountdown,todayPct,bestStr,avg30}){
-  const canvasRef=useRef(null);
-  const [generated,setGenerated]=useState(false);
+  const [busy,setBusy]=useState(false);
 
   const doneCount=daily.filter((_,i)=>(logs[TK]||{})[i]).length;
-  const completedRevs=revEntries.reduce((a,e)=>a+REV_INTERVALS.filter(iv=>e.reviews[String(iv)]===true).length,0);
-  const overdueCount=revEntries.filter(e=>REV_INTERVALS.some(iv=>isRevOverdue(e,iv))).length;
-  const subjCount=new Set(revEntries.map(e=>e.subject)).size;
+  const badgeCount=badges.length;
 
-  const drawCard=()=>{
-    const canvas=canvasRef.current;if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    const W=canvas.width=390,H=canvas.height=844;
-
-    // Background — soft gradient
-    const grad=ctx.createLinearGradient(0,0,W,H);
-    grad.addColorStop(0,'#1A1030');grad.addColorStop(0.5,'#0D1A2E');grad.addColorStop(1,'#0A1220');
-    ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
-
-    // Subtle noise overlay with dots
-    ctx.fillStyle='rgba(255,255,255,0.015)';
-    for(let i=0;i<400;i++){
-      const x=Math.random()*W,y=Math.random()*H;
-      ctx.beginPath();ctx.arc(x,y,Math.random()*1.5,0,Math.PI*2);ctx.fill();
-    }
-
-    // Top accent line
-    const accentGrad=ctx.createLinearGradient(0,0,W,0);
-    accentGrad.addColorStop(0,P);accentGrad.addColorStop(1,P2);
-    ctx.fillStyle=accentGrad;ctx.fillRect(0,0,W,4);
-
-    // Logo area
-    ctx.fillStyle='rgba(255,255,255,0.06)';
-    roundRect(ctx,24,28,80,38,12);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.9)';
-    ctx.font='bold 13px sans-serif';ctx.fillText('🔥 HABITRA',36,52);
-
-    // "Study Flex" label
-    ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.font='500 11px sans-serif';ctx.fillText('GATE 2027 • Progress Card',24,92);
-
-    // Name
-    ctx.fillStyle='#FFFFFF';
-    ctx.font='bold 28px sans-serif';ctx.fillText('Chandan Kumar',24,136);
-    ctx.fillStyle='rgba(255,255,255,0.45)';
-    ctx.font='500 13px sans-serif';ctx.fillText('Civil Engineering · Made Easy Delhi',24,160);
-
-    // Divider
-    ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(24,180);ctx.lineTo(W-24,180);ctx.stroke();
-
-    // Big stat: today
-    ctx.fillStyle=P2||'#9C68FF';
-    ctx.font='bold 72px sans-serif';ctx.fillText(`${todayPct}%`,24,270);
-    ctx.fillStyle='rgba(255,255,255,0.4)';
-    ctx.font='500 13px sans-serif';ctx.fillText("today's habits done",24,294);
-
-    // 3 column stats
-    const stats=[
-      {v:`${doneCount}/${daily.length}`,l:'Habits Today'},
-      {v:`🔥${bestStr}d`,l:'Best Streak'},
-      {v:`${avg30}%`,l:'30d Avg'},
-    ];
-    stats.forEach(({v,l},i)=>{
-      const x=24+i*(W-48)/3;
-      ctx.fillStyle='rgba(255,255,255,0.05)';
-      roundRect(ctx,x,314,(W-48)/3-10,72,14);ctx.fill();
-      ctx.fillStyle='#FFFFFF';
-      ctx.font='bold 20px sans-serif';ctx.fillText(v,x+12,344);
-      ctx.fillStyle='rgba(255,255,255,0.4)';
-      ctx.font='500 10px sans-serif';ctx.fillText(l,x+12,362);
-    });
-
-    // Study hours & revisions
-    const row2=[
-      {v:`${Math.round(totalHours)}h`,l:'Total Study'},
-      {v:`${weekHours}h`,l:'This Week'},
-      {v:`${completedRevs}`,l:'Revisions Done'},
-    ];
-    row2.forEach(({v,l},i)=>{
-      const x=24+i*(W-48)/3;
-      ctx.fillStyle='rgba(255,255,255,0.04)';
-      roundRect(ctx,x,402,(W-48)/3-10,72,14);ctx.fill();
-      ctx.fillStyle='rgba(180,200,255,0.9)';
-      ctx.font='bold 20px sans-serif';ctx.fillText(v,x+12,432);
-      ctx.fillStyle='rgba(255,255,255,0.35)';
-      ctx.font='500 10px sans-serif';ctx.fillText(l,x+12,450);
-    });
-
-    // GATE countdown
-    ctx.fillStyle='rgba(255,255,255,0.04)';
-    roundRect(ctx,24,490,W-48,76,16);ctx.fill();
-    ctx.strokeStyle=P+'55';ctx.lineWidth=1.5;
-    roundRect(ctx,24,490,W-48,76,16);ctx.stroke();
-    ctx.fillStyle='#FFFFFF';
-    ctx.font='bold 36px sans-serif';ctx.fillText(`${gateCountdown}`,36,538);
-    ctx.fillStyle='rgba(255,255,255,0.5)';
-    ctx.font='500 12px sans-serif';ctx.fillText('days until GATE + ESE 2027',100,520);
-    ctx.fillStyle='rgba(255,255,255,0.35)';
-    ctx.font='500 11px sans-serif';ctx.fillText(`${subjCount} subjects logged · ${badges.length} badges · Lv${getLevel(xp)}`,100,543);
-
-    // XP bar
-    const xpW=W-48,xpX=24,xpY=584;
-    ctx.fillStyle='rgba(255,255,255,0.08)';
-    roundRect(ctx,xpX,xpY,xpW,10,5);ctx.fill();
-    const prog=getLevelProgress(xp)/100;
-    const progGrad=ctx.createLinearGradient(xpX,0,xpX+xpW,0);
-    progGrad.addColorStop(0,P);progGrad.addColorStop(1,P2);
-    ctx.fillStyle=progGrad;
-    roundRect(ctx,xpX,xpY,xpW*prog,10,5);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.font='500 10px sans-serif';ctx.fillText(`${getLevelName(xp)} · ${xp} XP · ${getLevelProgress(xp)}% to Lv${getLevel(xp)+1}`,xpX,xpY+24);
-
-    // Bottom watermark
-    ctx.fillStyle='rgba(255,255,255,0.12)';
-    ctx.font='500 10px sans-serif';
-    const today=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
-    ctx.fillText(`Generated on ${today} · habitra.app`,24,H-28);
-
-    // Overdue warning if any
-    if(overdueCount>0){
-      ctx.fillStyle='rgba(229,57,53,0.15)';
-      roundRect(ctx,24,634,W-48,50,12);ctx.fill();
-      ctx.strokeStyle='rgba(229,57,53,0.4)';ctx.lineWidth=1;
-      roundRect(ctx,24,634,W-48,50,12);ctx.stroke();
-      ctx.fillStyle='#EF9A9A';
-      ctx.font='bold 12px sans-serif';ctx.fillText(`⚠ ${overdueCount} overdue revision${overdueCount>1?'s':''} — needs attention`,36,664);
-    }
-
-    setGenerated(true);
-  };
-
-  function roundRect(ctx,x,y,w,h,r){
+  /* rounded-rect helper */
+  function rr(ctx,x,y,w,h,r){
     ctx.beginPath();ctx.moveTo(x+r,y);
-    ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-    ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-    ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+    ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+    ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+    ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+    ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+    ctx.closePath();
   }
 
-  useEffect(()=>{setTimeout(drawCard,60);},[]);
+  const generateAndDownload=()=>{
+    if(busy)return;
+    setBusy(true);
 
-  const downloadCard=()=>{
-    const canvas=canvasRef.current;if(!canvas)return;
-    const a=document.createElement('a');
-    a.href=canvas.toDataURL('image/png',1.0);
-    a.download=`habitra-flex-${new Date().toISOString().split('T')[0]}.png`;
-    a.click();
+    /* ── offscreen canvas at full resolution ── */
+    const W=900,H=1200;
+    const canvas=document.createElement('canvas');
+    canvas.width=W;canvas.height=H;
+    const ctx=canvas.getContext('2d');
+
+    /* 1 ── BACKGROUND gradient (teal → indigo → orange) */
+    const bg=ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,'#3BBFB5');
+    bg.addColorStop(0.45,'#4A90D9');
+    bg.addColorStop(0.75,'#7B72E9');
+    bg.addColorStop(1,'#E07A5F');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+    /* decorative translucent circles — same as advanced version */
+    ctx.fillStyle='rgba(255,255,255,0.13)';
+    for(let i=0;i<8;i++){
+      ctx.beginPath();ctx.arc(110+i*105,150+i*85,88,0,Math.PI*2);ctx.fill();
+    }
+
+    /* 2 ── HEADER TEXT */
+    ctx.fillStyle='#FFFFFF';
+    ctx.font='900 80px Nunito, Arial';
+    ctx.fillText('HABITRA',80,150);
+    ctx.font='700 30px Nunito, Arial';
+    ctx.fillText(new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'}),84,200);
+
+    /* 3 ── WHITE CARD */
+    ctx.fillStyle='rgba(255,255,255,0.94)';
+    rr(ctx,60,250,W-120,H-310,44);ctx.fill();
+
+    /* 4 ── HERO STAT: "X% Today" as ONE string — no overlap ever */
+    ctx.fillStyle='#1C1B1F';
+    ctx.font='900 56px Nunito, Arial';
+    ctx.fillText(`${todayPct}% Today`,110,348);
+
+    /* sub-label */
+    ctx.font='700 30px Nunito, Arial';
+    ctx.fillStyle='#49454F';
+    ctx.fillText(`${doneCount}/${daily.length} habits completed`,110,398);
+
+    /* thin divider */
+    ctx.strokeStyle='rgba(103,80,164,0.15)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(110,428);ctx.lineTo(W-110,428);ctx.stroke();
+
+    /* 5 ── STAT ROWS */
+    const stats=[
+      ['Best streak',`${bestStr} days`],
+      ['30-day average',`${avg30}%`],
+      ['XP',String(xp)],
+      ['Badges',`${badgeCount}/16`],
+      ['GATE countdown',`${gateCountdown} days`],
+    ];
+    stats.forEach(([label,value],i)=>{
+      const y=490+i*90;
+      /* pill background */
+      ctx.fillStyle='rgba(103,80,164,0.07)';
+      rr(ctx,110,y-46,W-220,68,22);ctx.fill();
+      /* label */
+      ctx.fillStyle=P||'#6750A4';
+      ctx.font='800 26px Nunito, Arial';
+      ctx.textAlign='left';
+      ctx.fillText(label,140,y);
+      /* value — right-aligned */
+      ctx.fillStyle='#1C1B1F';
+      ctx.font='900 32px Nunito, Arial';
+      ctx.textAlign='right';
+      ctx.fillText(value,W-140,y);
+    });
+    ctx.textAlign='left';
+
+    /* 6 ── FOOTER */
+    ctx.fillStyle='rgba(255,255,255,0.80)';
+    ctx.font='800 26px Nunito, Arial';
+    ctx.fillText('Built for GATE consistency',80,H-100);
+    ctx.font='600 22px Nunito, Arial';
+    ctx.fillStyle='rgba(255,255,255,0.65)';
+    ctx.fillText('Shared from my personal tracker',80,H-65);
+
+    /* level badge bottom-right */
+    const lvlTxt=`Lv${getLevel(xp)} · ${getLevelName(xp)}`;
+    ctx.font='800 22px Nunito, Arial';
+    ctx.textAlign='right';
+    ctx.fillStyle='rgba(255,255,255,0.75)';
+    ctx.fillText(lvlTxt,W-80,H-65);
+    ctx.textAlign='left';
+
+    /* 7 ── download */
+    canvas.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=`habitra-streak-${new Date().toISOString().split('T')[0]}.png`;
+      document.body.appendChild(a);a.click();
+      document.body.removeChild(a);URL.revokeObjectURL(url);
+      setBusy(false);
+    },'image/png');
   };
 
   return(
     <div onClick={onClose}
-      style={{position:'fixed',inset:0,background:'rgba(10,10,20,0.75)',
-        display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
-        zIndex:60,backdropFilter:'blur(8px)',padding:'16px'}}>
+      style={{position:'fixed',inset:0,background:'rgba(15,13,20,0.72)',
+        display:'flex',alignItems:'center',justifyContent:'center',
+        zIndex:60,backdropFilter:'blur(10px)',padding:'20px'}}>
       <div onClick={e=>e.stopPropagation()}
-        style={{background:'#12102A',borderRadius:24,overflow:'hidden',
-          border:'1px solid rgba(255,255,255,0.1)',width:'100%',maxWidth:420,
-          boxShadow:'0 20px 60px rgba(0,0,0,0.5)'}}>
-        <div style={{padding:'14px 18px',display:'flex',alignItems:'center',
-          borderBottom:'1px solid rgba(255,255,255,0.07)'}}>
-          <div style={{flex:1,fontSize:14,fontWeight:800,color:'#FFF'}}>📲 Status Flashcard</div>
+        style={{background:'#FFFFFF',borderRadius:24,overflow:'hidden',
+          width:'100%',maxWidth:400,
+          boxShadow:'0 24px 64px rgba(0,0,0,0.30)'}}>
+
+        {/* header */}
+        <div style={{padding:'16px 20px',display:'flex',alignItems:'center',
+          borderBottom:'1px solid #F0EAFE'}}>
+          <span style={{flex:1,fontSize:15,fontWeight:900,color:'#1C1B1F'}}>Share Card</span>
           <button onClick={onClose}
-            style={{background:'rgba(255,255,255,0.08)',border:'none',borderRadius:8,
-              width:28,height:28,cursor:'pointer',color:'rgba(255,255,255,0.5)',fontSize:16}}>×</button>
+            style={{background:'#F6F0FF',border:'none',borderRadius:8,
+              width:32,height:32,cursor:'pointer',color:'#6750A4',
+              fontSize:20,fontWeight:700,lineHeight:'32px',textAlign:'center',
+              display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
         </div>
-        <div style={{padding:'14px',display:'flex',justifyContent:'center',
-          background:'rgba(0,0,0,0.2)'}}>
-          <canvas ref={canvasRef} style={{width:'100%',maxWidth:340,borderRadius:12,
-            boxShadow:'0 8px 30px rgba(0,0,0,0.4)',display:'block'}}/>
+
+        {/* preview thumbnail — pure CSS, no canvas shown */}
+        <div style={{margin:'20px 20px 0',borderRadius:18,overflow:'hidden',
+          background:'linear-gradient(135deg,#3BBFB5 0%,#4A90D9 45%,#7B72E9 75%,#E07A5F 100%)',
+          padding:'22px 22px 18px',
+          boxShadow:'0 4px 20px rgba(103,80,164,0.20)'}}>
+          {/* HABITRA label */}
+          <div style={{display:'inline-block',background:'rgba(255,255,255,0.22)',
+            borderRadius:20,padding:'5px 14px',
+            fontSize:14,fontWeight:900,color:'#FFF',marginBottom:6,letterSpacing:0.5}}>HABITRA</div>
+          <div style={{fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.85)',marginBottom:12}}>
+            {new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}
+          </div>
+          {/* white card preview */}
+          <div style={{background:'rgba(255,255,255,0.95)',borderRadius:16,padding:'14px 16px'}}>
+            <div style={{fontSize:20,fontWeight:900,color:'#1C1B1F'}}>{todayPct}% Today</div>
+            <div style={{fontSize:11,color:'#79747E',marginBottom:10}}>{doneCount}/{daily.length} habits completed</div>
+            {[['Best streak',`${bestStr} days`],['30-day avg',`${avg30}%`],['GATE countdown',`${gateCountdown} days`]].map(([l,v])=>(
+              <div key={l} style={{display:'flex',justifyContent:'space-between',
+                background:'rgba(103,80,164,0.07)',borderRadius:10,
+                padding:'7px 11px',marginBottom:5}}>
+                <span style={{fontSize:11,fontWeight:700,color:P||'#6750A4'}}>{l}</span>
+                <span style={{fontSize:12,fontWeight:900,color:'#1C1B1F'}}>{v}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.7)',marginTop:10}}>
+            Built for GATE consistency · Shared from my personal tracker
+          </div>
         </div>
-        <div style={{padding:'12px 16px 20px',display:'flex',gap:9}}>
-          <button onClick={downloadCard}
-            style={{flex:1,padding:'12px',background:`linear-gradient(90deg,${P},${P2})`,
-              border:'none',borderRadius:14,color:'#FFF',fontWeight:800,fontSize:13,
-              cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
-            ⬇ Save Card
-          </button>
-          <button onClick={drawCard}
-            style={{flex:1,padding:'12px',background:'rgba(255,255,255,0.07)',
-              border:'1px solid rgba(255,255,255,0.12)',borderRadius:14,
-              color:'rgba(255,255,255,0.7)',fontWeight:700,fontSize:13,
-              cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
-            🔄 Refresh
+
+        <div style={{padding:'16px 20px 20px'}}>
+          <p style={{fontSize:12,color:'#79747E',marginBottom:14,textAlign:'center'}}>
+            Tap below to download a full-quality 900×1200 PNG
+          </p>
+          <button onClick={generateAndDownload} disabled={busy}
+            style={{width:'100%',padding:'14px',
+              background:busy?'#C4B5F4':`linear-gradient(90deg,${P||'#6750A4'},${P2||'#9C68FF'})`,
+              border:'none',borderRadius:14,color:'#FFF',
+              fontWeight:900,fontSize:15,cursor:busy?'default':'pointer',
+              fontFamily:'Nunito,sans-serif',
+              boxShadow:'0 4px 16px rgba(103,80,164,0.35)',
+              transition:'opacity 0.2s'}}>
+            {busy?'Generating…':'Download Share Card'}
           </button>
         </div>
       </div>
@@ -2018,14 +2292,14 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
         </div>
 
         {/* Bottom white section: Quote + Compact Study Hours */}
-        <div style={{background:'#FFFFFF',border:'1px solid #EDE8FB',borderTop:'none'}}>
+        <div style={{background:SUR,border:`1px solid ${OL}`,borderTop:'none'}}>
 
           {/* Quote of the day — full width, highlighted */}
           <div style={{padding:'12px 16px 13px',background:`linear-gradient(135deg,${P}18,${P2}12)`,
             borderBottom:`1px solid ${P}22`}}>
             <div style={{fontSize:9,fontWeight:800,color:P,letterSpacing:1.4,
               textTransform:'uppercase',marginBottom:6}}>✦ Today's Thought</div>
-            <div style={{fontSize:13,fontWeight:700,color:'#1A1030',
+            <div style={{fontSize:13,fontWeight:700,color:TX,
               fontStyle:'italic',lineHeight:1.5,letterSpacing:0.2,
               background:`linear-gradient(135deg,${P}22,${P2}18)`,
               borderRadius:12,padding:'10px 12px',
@@ -2038,35 +2312,35 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
 
           {/* ── COMPACT STUDY HOURS STRIP ── */}
           <div style={{padding:'10px 14px 8px'}}>
-            <div style={{fontSize:9,fontWeight:800,color:'#9E94C0',letterSpacing:1.2,
+            <div style={{fontSize:9,fontWeight:800,color:TS,letterSpacing:1.2,
               textTransform:'uppercase',marginBottom:7}}>📖 Today's Study Hours</div>
 
             {/* Single-row compact: Class | Self-Study */}
             <div style={{display:'flex',gap:7,marginBottom:6}}>
 
               {/* CLASS pill */}
-              <div style={{flex:1,background:todayClassHours>=CLASS_HOURS_TARGET?'#E8F5E9':'#F4F4F8',
-                border:`1.5px solid ${todayClassHours>=CLASS_HOURS_TARGET?'#81C784':'#E4DAFB'}`,
+              <div style={{flex:1,background:SV,
+                border:`1.5px solid ${todayClassHours>=CLASS_HOURS_TARGET?'#43A047':OL}`,
                 borderRadius:12,padding:'7px 10px'}}>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
-                  <span style={{fontSize:10,fontWeight:800,color:'#388E3C'}}>🏫 Class</span>
+                  <span style={{fontSize:10,fontWeight:800,color:'#43A047'}}>🏫 Class</span>
                   <button onClick={()=>{setShowClassInput(v=>!v);setShowHoursInput(false);}}
-                    style={{background:showClassInput?'#FFCDD2':'#C8E6C9',border:'none',borderRadius:6,
-                      padding:'2px 7px',cursor:'pointer',color:showClassInput?'#C62828':'#2E7D32',
+                    style={{background:showClassInput?OL:PC,border:'none',borderRadius:6,
+                      padding:'2px 7px',cursor:'pointer',color:showClassInput?'#EF5350':P,
                       fontSize:10,fontWeight:800,fontFamily:'Nunito,sans-serif',lineHeight:1.4}}>
                     {showClassInput?'✕':'Log'}
                   </button>
                 </div>
                 <div style={{display:'flex',alignItems:'baseline',gap:3,marginBottom:4}}>
                   <span style={{fontSize:17,fontWeight:900,
-                    color:todayClassHours>=CLASS_HOURS_TARGET?'#1B5E20':'#616161'}}>
+                    color:todayClassHours>=CLASS_HOURS_TARGET?'#43A047':TM}}>
                     {todayClassHours}
                   </span>
-                  <span style={{fontSize:10,color:'#9E9E9E',fontWeight:600}}>/{CLASS_HOURS_TARGET}h</span>
+                  <span style={{fontSize:10,color:TS,fontWeight:600}}>/{CLASS_HOURS_TARGET}h</span>
                 </div>
-                <div style={{height:3,background:'rgba(0,0,0,0.08)',borderRadius:2,overflow:'hidden'}}>
+                <div style={{height:3,background:OL,borderRadius:2,overflow:'hidden'}}>
                   <div style={{height:'100%',borderRadius:2,transition:'width 0.5s',
-                    background:todayClassHours>=CLASS_HOURS_TARGET?'#43A047':'#A5D6A7',
+                    background:todayClassHours>=CLASS_HOURS_TARGET?'#43A047':'#66BB6A',
                     width:`${Math.min((todayClassHours/CLASS_HOURS_TARGET)*100,100)}%`}}/>
                 </div>
               </div>
@@ -2075,27 +2349,26 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
               {(()=>{
                 const exceeded=todayHours>IDEAL_STUDY_HOURS;
                 const perfect=todayHours===IDEAL_STUDY_HOURS;
-                const bg=exceeded?'#EBF5FB':perfect?'#E8F5E9':todayHours>0?'#FFF8F1':'#F4F4F8';
-                const border=exceeded?'#90CAF9':perfect?'#81C784':todayHours>0?'#FFCC80':'#E4DAFB';
-                const numCol=exceeded?'#1565C0':perfect?'#1B5E20':todayHours>0?'#E65100':'#616161';
+                const borderCol=exceeded?P2:perfect?'#43A047':todayHours>0?'#FFB74D':OL;
+                const numCol=exceeded?P:perfect?'#43A047':todayHours>0?'#FFB74D':TM;
                 return(
-                  <div style={{flex:1,background:bg,border:`1.5px solid ${border}`,borderRadius:12,padding:'7px 10px'}}>
+                  <div style={{flex:1,background:SV,border:`1.5px solid ${borderCol}`,borderRadius:12,padding:'7px 10px'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
                       <span style={{fontSize:10,fontWeight:800,color:numCol}}>📚 Self-Study</span>
                       <button onClick={()=>{setShowHoursInput(v=>!v);setShowClassInput(false);}}
-                        style={{background:showHoursInput?'#FFCDD2':PC,border:'none',borderRadius:6,
-                          padding:'2px 7px',cursor:'pointer',color:showHoursInput?'#C62828':P,
+                        style={{background:showHoursInput?OL:PC,border:'none',borderRadius:6,
+                          padding:'2px 7px',cursor:'pointer',color:showHoursInput?'#EF5350':P,
                           fontSize:10,fontWeight:800,fontFamily:'Nunito,sans-serif',lineHeight:1.4}}>
                         {showHoursInput?'✕':'Log'}
                       </button>
                     </div>
                     <div style={{display:'flex',alignItems:'baseline',gap:3,marginBottom:4}}>
                       <span style={{fontSize:17,fontWeight:900,color:numCol}}>{todayHours}</span>
-                      <span style={{fontSize:10,color:'#9E9E9E',fontWeight:600}}>/{IDEAL_STUDY_HOURS}h</span>
+                      <span style={{fontSize:10,color:TS,fontWeight:600}}>/{IDEAL_STUDY_HOURS}h</span>
                     </div>
-                    <div style={{height:3,background:'rgba(0,0,0,0.08)',borderRadius:2,overflow:'hidden'}}>
+                    <div style={{height:3,background:OL,borderRadius:2,overflow:'hidden'}}>
                       <div style={{height:'100%',borderRadius:2,transition:'width 0.5s',
-                        background:exceeded?'#1565C0':perfect?'#43A047':todayHours>0?'#F57C00':'#E0E0E0',
+                        background:exceeded?P:perfect?'#43A047':todayHours>0?'#FFB74D':TS,
                         width:`${Math.min((todayHours/IDEAL_STUDY_HOURS)*100,100)}%`}}/>
                     </div>
                   </div>
@@ -2110,10 +2383,9 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
               const msg=exceeded?`🚀 Excellent! +${(todayHours-IDEAL_STUDY_HOURS).toFixed(1)}h beyond goal — incredible!`
                 :perfect?'🏆 Best Best! Perfect 6-hour day! GATE 2027 approves!'
                 :`📈 ${(IDEAL_STUDY_HOURS-todayHours).toFixed(1)}h short — push harder tomorrow!`;
-              const col=exceeded?'#1565C0':perfect?'#2E7D32':'#E65100';
-              const bg=exceeded?'#EBF5FB':perfect?'#E9F7EF':'#FEF9E7';
+              const col=exceeded?P:perfect?'#43A047':'#FFB74D';
               return(
-                <div style={{background:bg,borderRadius:9,padding:'5px 10px',
+                <div style={{background:SV,borderLeft:`3px solid ${col}`,borderRadius:9,padding:'5px 10px',
                   fontSize:10,fontWeight:700,color:col,marginBottom:5}}>
                   {msg}
                 </div>
@@ -2121,7 +2393,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
             })()}
 
             {/* Week totals mini-row */}
-            <div style={{display:'flex',gap:0,borderTop:'1px solid #F0EAFE',paddingTop:6,marginTop:2}}>
+            <div style={{display:'flex',gap:0,borderTop:`1px solid ${OL}`,paddingTop:6,marginTop:2}}>
               {[
                 [weekHours+'h','Self/wk','#388E3C'],
                 [(weekClassHours||0)+'h','Class/wk','#1565C0'],
@@ -2138,16 +2410,16 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
           {/* Class hours input panel */}
           {showClassInput&&(
             <div style={{padding:'8px 14px 10px',display:'flex',gap:7,alignItems:'center',
-              background:'#F2FAF2',borderTop:'1px solid #F0EAFE'}}>
+              background:SV,borderTop:`1px solid ${OL}`}}>
               <span style={{fontSize:13}}>🏫</span>
               <input type="number" min="0" max="12" step="0.5" value={classInput}
                 onChange={e=>setClassInput(e.target.value)}
                 onKeyDown={e=>e.key==='Enter'&&logClassHours()}
                 autoFocus placeholder="e.g. 6"
-                style={{flex:1,border:'2px solid #A5D6A7',borderRadius:9,padding:'7px 10px',
-                  fontSize:13,fontWeight:700,color:'#1B5E20',background:'#F1FAF1',outline:'none',
+                style={{flex:1,border:'2px solid #43A047',borderRadius:9,padding:'7px 10px',
+                  fontSize:13,fontWeight:700,color:TX,background:SV,outline:'none',
                   fontFamily:'Nunito,sans-serif'}}/>
-              <span style={{fontSize:11,color:'#388E3C',fontWeight:600}}>class hrs</span>
+              <span style={{fontSize:11,color:'#43A047',fontWeight:600}}>class hrs</span>
               <button onClick={logClassHours}
                 style={{background:'#43A047',border:'none',borderRadius:9,padding:'7px 13px',
                   cursor:'pointer',color:'#FFF',fontWeight:800,fontSize:12,fontFamily:'Nunito,sans-serif'}}>
@@ -2159,14 +2431,14 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
           {/* Self-study hours input panel */}
           {showHoursInput&&(
             <div style={{padding:'8px 14px 10px',display:'flex',gap:7,alignItems:'center',
-              background:'#F9F7FF',borderTop:'1px solid #F0EAFE'}}>
+              background:SV,borderTop:`1px solid ${OL}`}}>
               <span style={{fontSize:13}}>📚</span>
               <input type="number" min="0" max="24" step="0.5" value={hoursInput}
                 onChange={e=>setHoursInput(e.target.value)}
                 onKeyDown={e=>e.key==='Enter'&&logHours()}
                 autoFocus placeholder="e.g. 5.5"
                 style={{flex:1,border:`2px solid ${OL}`,borderRadius:9,padding:'7px 10px',
-                  fontSize:13,fontWeight:700,color:TX,background:'#F6F0FF',outline:'none',
+                  fontSize:13,fontWeight:700,color:TX,background:SV,outline:'none',
                   fontFamily:'Nunito,sans-serif'}}/>
               <span style={{fontSize:11,color:P,fontWeight:600}}>self-study hrs</span>
               <button onClick={logHours}
@@ -2188,7 +2460,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
         });
         const doneTasks=tasks.filter(t=>t.done);
         return(
-          <div style={{background:'#FFFFFF',borderRadius:16,border:'1px solid #EDE8FB',
+          <div style={{background:SUR,borderRadius:16,border:`1px solid ${OL}`,
             boxShadow:'0 1px 6px rgba(103,80,164,0.06)',overflow:'hidden'}}>
 
             {/* Header */}
@@ -2224,7 +2496,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                   onKeyDown={e=>{if(e.key==='Enter')addTask();if(e.key==='Escape'){setShowTaskInput(false);}}}
                   placeholder="What needs to be done? e.g. 🧺 Wash clothes"
                   style={{width:'100%',border:`2px solid ${OL}`,borderRadius:12,
-                    padding:'10px 13px',fontSize:13,color:TX,background:'#FFF',
+                    padding:'10px 13px',fontSize:13,color:TX,background:SUR,
                     boxSizing:'border-box',fontWeight:600,outline:'none',
                     fontFamily:'Nunito,sans-serif',marginBottom:9}}
                   onFocus={e=>e.target.style.borderColor=P}
@@ -2235,7 +2507,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                   {['high','medium','low'].map(p=>(
                     <button key={p} onClick={()=>setTaskPriority(p)}
                       style={{flex:1,padding:'7px 4px',borderRadius:10,border:`2px solid ${taskPriority===p?PRIORITY_CFG[p].color:OL}`,
-                        background:taskPriority===p?PRIORITY_CFG[p].bg:'#FFF',
+                        background:taskPriority===p?PRIORITY_CFG[p].bg:SUR,
                         color:taskPriority===p?PRIORITY_CFG[p].color:TS,
                         fontWeight:taskPriority===p?900:600,fontSize:11,cursor:'pointer',
                         fontFamily:'Nunito,sans-serif',transition:'all 0.12s'}}>
@@ -2251,7 +2523,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                     <input type="date" value={taskDate} onChange={e=>setTaskDate(e.target.value)}
                       style={{width:'100%',border:`2px solid ${OL}`,borderRadius:10,
                         padding:'8px 8px 8px 28px',fontSize:11,color:taskDate?TX:'#9E94C0',
-                        background:'#FFF',fontWeight:600,outline:'none',fontFamily:'Nunito,sans-serif'}}
+                        background:SUR,fontWeight:600,outline:'none',fontFamily:'Nunito,sans-serif'}}
                       onFocus={e=>e.target.style.borderColor=P} onBlur={e=>e.target.style.borderColor=OL}/>
                   </div>
                   <div style={{flex:1,position:'relative'}}>
@@ -2260,7 +2532,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                       placeholder="Remind at"
                       style={{width:'100%',border:`2px solid ${OL}`,borderRadius:10,
                         padding:'8px 8px 8px 28px',fontSize:11,color:taskReminder?TX:'#9E94C0',
-                        background:'#FFF',fontWeight:600,outline:'none',fontFamily:'Nunito,sans-serif'}}
+                        background:SUR,fontWeight:600,outline:'none',fontFamily:'Nunito,sans-serif'}}
                       onFocus={e=>e.target.style.borderColor=P} onBlur={e=>e.target.style.borderColor=OL}/>
                   </div>
                 </div>
@@ -2271,7 +2543,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                     <button key={val} onClick={()=>setTaskRecur(val)}
                       style={{flex:1,padding:'6px 2px',borderRadius:9,
                         border:`2px solid ${taskRecur===val?P:OL}`,
-                        background:taskRecur===val?PC:'#FFF',
+                        background:taskRecur===val?PC:SUR,
                         color:taskRecur===val?P:TS,fontWeight:taskRecur===val?800:500,
                         fontSize:10,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
                       {lbl}
@@ -2284,7 +2556,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                   placeholder="📝 Add a note (optional)…"
                   rows={2}
                   style={{width:'100%',border:`2px solid ${OL}`,borderRadius:10,
-                    padding:'8px 12px',fontSize:12,color:TX,background:'#FFF',resize:'none',
+                    padding:'8px 12px',fontSize:12,color:TX,background:SUR,resize:'none',
                     boxSizing:'border-box',fontWeight:500,outline:'none',lineHeight:1.4,
                     fontFamily:'Nunito,sans-serif',marginBottom:9}}
                   onFocus={e=>e.target.style.borderColor=P} onBlur={e=>e.target.style.borderColor=OL}/>
@@ -2376,7 +2648,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                             onChange={e=>updateTask(task.id,{notes:e.target.value})}
                             placeholder="Add a note…" rows={2}
                             style={{width:'100%',border:`2px solid ${P}`,borderRadius:10,
-                              padding:'8px 10px',fontSize:12,color:TX,background:'#FFF',
+                              padding:'8px 10px',fontSize:12,color:TX,background:SUR,
                               resize:'none',boxSizing:'border-box',outline:'none',lineHeight:1.4,
                               fontFamily:'Nunito,sans-serif'}}/>
                           <button onClick={()=>setEditingTaskId(null)}
@@ -2390,7 +2662,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                         <div>
                           {task.notes?(
                             <div style={{fontSize:12,color:TM,lineHeight:1.5,
-                              background:'#F9F7FF',borderRadius:10,padding:'8px 10px',marginBottom:6}}>
+                              background:SV,borderRadius:10,padding:'8px 10px',marginBottom:6}}>
                               📝 {task.notes}
                             </div>
                           ):null}
@@ -2405,7 +2677,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                               <button key={p} onClick={()=>updateTask(task.id,{priority:p})}
                                 style={{padding:'5px 9px',borderRadius:9,
                                   border:`1.5px solid ${(task.priority||'medium')===p?PRIORITY_CFG[p].color:OL}`,
-                                  background:(task.priority||'medium')===p?PRIORITY_CFG[p].bg:'#FFF',
+                                  background:(task.priority||'medium')===p?PRIORITY_CFG[p].bg:SV,
                                   color:(task.priority||'medium')===p?PRIORITY_CFG[p].color:TS,
                                   fontSize:10,fontWeight:700,cursor:'pointer',
                                   fontFamily:'Nunito,sans-serif'}}>
@@ -2437,7 +2709,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                 </button>
                 {showCompletedTasks&&doneTasks.map((task)=>(
                   <div key={task.id} style={{display:'flex',alignItems:'center',gap:10,
-                    padding:'9px 14px',borderTop:`1px solid ${OL}`,background:'#F9F9FC',opacity:0.75}}>
+                    padding:'9px 14px',borderTop:`1px solid ${OL}`,background:SV,opacity:0.75}}>
                     <button onClick={()=>toggleTask(task.id)}
                       style={{width:22,height:22,borderRadius:7,border:'none',background:'#43A047',
                         cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0,flexShrink:0}}>
@@ -2468,7 +2740,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
 
       {/* ── DUE REVISIONS (collapsible) ── */}
       {dueEntries.length>0&&(
-        <div style={{background:'#FFFFFF',borderRadius:16,border:'1.5px solid #FFB74D',
+        <div style={{background:SUR,borderRadius:16,border:'1.5px solid #FFB74D',
           overflow:'hidden',boxShadow:'0 2px 10px rgba(255,152,0,0.1)'}}>
           <button onClick={()=>setShowDueRevs(v=>!v)}
             style={{display:'flex',alignItems:'center',gap:10,width:'100%',
@@ -2486,9 +2758,9 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                 const isOver=dueIntervals.some(iv=>isRevOverdue(entry,iv));
                 const col=subjColor(entry.subject);
                 return(
-                  <div key={entry.id} style={{background:isOver?'#FFF5F5':'#FFFBF3',
+                  <div key={entry.id} style={{background:isOver?SV:'#28200A22',
                     borderRadius:12,padding:'10px 12px',
-                    border:`1px solid ${isOver?'#FFCDD2':'#FFE0B2'}`}}>
+                    border:`1px solid ${isOver?'#C6282844':'#FFE0B255'}`}}>
                     <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:7}}>
                       <span style={{fontSize:11,fontWeight:800,color:col,
                         background:col+'18',borderRadius:7,padding:'2px 8px'}}>{entry.subject}</span>
@@ -2502,8 +2774,8 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                         <button key={iv} onClick={()=>onRevToggle(entry.id,iv)}
                           style={{padding:'5px 10px',borderRadius:9,
                             border:`1.5px solid ${entry.reviews[String(iv)]===true?'#43A047':'#FFB74D'}`,
-                            background:entry.reviews[String(iv)]===true?'#E8F5E9':'#FFF',
-                            color:entry.reviews[String(iv)]===true?'#2E7D32':'#E65100',
+                            background:entry.reviews[String(iv)]===true?'#1B3A1E':SV,
+                            color:entry.reviews[String(iv)]===true?'#66BB6A':'#E65100',
                             fontSize:11,fontWeight:700,cursor:'pointer',
                             fontFamily:'Nunito,sans-serif',transition:'all 0.15s'}}>
                           {entry.reviews[String(iv)]===true?'✓ ':''}{REV_LABELS[iv]}
@@ -2524,11 +2796,11 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
       )}
 
       {/* ── HABITS CARD ── */}
-      <div style={{background:'#FFFFFF',borderRadius:16,border:'1px solid #EDE8FB',
+      <div style={{background:SUR,borderRadius:16,border:`1px solid ${OL}`,
         boxShadow:'0 1px 6px rgba(103,80,164,0.06)',overflow:'hidden'}}>
         <div style={{padding:'12px 16px 8px',display:'flex',alignItems:'center',
-          justifyContent:'space-between',borderBottom:'1px solid #F0EAFE'}}>
-          <span style={{fontSize:10,fontWeight:800,color:'#9E94C0',letterSpacing:1.2,textTransform:'uppercase'}}>
+          justifyContent:'space-between',borderBottom:`1px solid ${OL}`}}>
+          <span style={{fontSize:10,fontWeight:800,color:TS,letterSpacing:1.2,textTransform:'uppercase'}}>
             Today's Habits
           </span>
           <span style={{fontSize:11,fontWeight:700,color:P}}>{todayDone}/{daily.length} done</span>
@@ -2544,21 +2816,22 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
           const st=getStreak(logs,i);
           const col=hc(i);
           return(
-            <button key={i} className="hbtn" onClick={()=>toggleToday(i)}
+            <button key={i} className={`hbtn${done?' habit-done-row':''}`} onClick={()=>toggleToday(i)}
               style={{display:'flex',alignItems:'center',gap:11,width:'100%',
                 padding:'10px 16px',
                 background:done?col.bg+'88':'transparent',
-                border:'none',borderBottom:`1px solid ${done?col.f+'22':'#F6F0FF'}`,
+                border:'none',borderBottom:`1px solid ${done?col.f+'22':OL}`,
                 textAlign:'left',cursor:'pointer',transition:'background 0.12s'}}>
               <div style={{width:22,height:22,borderRadius:7,flexShrink:0,
-                background:done?col.f:'#EDE8FB',
+                background:done?col.f:OL,
                 display:'flex',alignItems:'center',justifyContent:'center',
                 transition:'all 0.15s'}}>
                 {done&&<Ico d={IC.check} s={12} c='#FFF' sw={3}/>}
               </div>
               <span style={{flex:1,fontSize:13,fontWeight:done?600:700,
                 color:done?col.dk:TX,
-                textDecoration:done?'line-through':'none',lineHeight:1.35}}>
+                textDecoration:done?'line-through':'none',lineHeight:1.35}}
+                className={done?'habit-done-label':''}>
                 {h}
               </span>
               {st>=3&&<span style={{fontSize:10,fontWeight:800,color:col.f,
@@ -2713,7 +2986,7 @@ function AbsenceModal({onClose,onSave,existingAbsences,studyHours,daily}){
                 {ABSENCE_LEVELS.map(lv=>(
                   <button key={lv.pct} onClick={()=>setSelPct(selPct===lv.pct?null:lv.pct)}
                     style={{display:'flex',alignItems:'center',gap:12,
-                      background:selPct===lv.pct?lv.bg:'#FAFAFA',
+                      background:selPct===lv.pct?lv.bg:SV,
                       border:`2.5px solid ${selPct===lv.pct?lv.color:OL}`,
                       borderRadius:16,padding:'12px 14px',cursor:'pointer',
                       textAlign:'left',fontFamily:'Nunito,sans-serif',
@@ -2831,9 +3104,9 @@ function AbsenceModal({onClose,onSave,existingAbsences,studyHours,daily}){
 
             <button onClick={doSave} disabled={selPct===null}
               style={{width:'100%',padding:'14px',
-                background:selPct===null?'#EEE':`linear-gradient(90deg,#B71C1C,#E53935)`,
+                background:selPct===null?SV:`linear-gradient(90deg,#B71C1C,#E53935)`,
+                color:selPct===null?TS:'#FFF',
                 border:'none',borderRadius:14,
-                color:selPct===null?'#AAA':'#FFF',
                 fontWeight:900,fontSize:15,cursor:selPct===null?'default':'pointer',
                 fontFamily:'Nunito,sans-serif',
                 boxShadow:selPct!==null?'0 4px 18px rgba(183,28,28,0.4)':'none'}}>
@@ -3097,13 +3370,13 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
 
       {/* Notifications */}
       <SH ch="🔔 Notifications"/>
-      <div style={{background:'#FFFFFF',borderRadius:20,border:'1px solid #E4DAFB',
+      <div style={{background:SUR,borderRadius:20,border:`1px solid ${OL}`,
         padding:16,marginBottom:14,boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
-          paddingBottom:12,borderBottom:'1px solid #E4DAFB',marginBottom:12}}>
+          paddingBottom:12,borderBottom:`1px solid ${OL}`,marginBottom:12}}>
           <div>
-            <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F'}}>🔔 Daily Reminder</div>
-            <div style={{fontSize:11,color:'#79747E',marginTop:2}}>
+            <div style={{fontSize:14,fontWeight:700,color:TX}}>🔔 Daily Reminder</div>
+            <div style={{fontSize:11,color:TS,marginTop:2}}>
               {notifEnabled?`Notifying at ${notifTime}`:'Get daily habit reminders'}
             </div>
           </div>
@@ -3118,11 +3391,11 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
         </div>
         {notifEnabled&&(
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <div style={{fontSize:12,fontWeight:700,color:'#49454F',flex:1}}>⏰ Reminder Time</div>
+            <div style={{fontSize:12,fontWeight:700,color:TM,flex:1}}>⏰ Reminder Time</div>
             <input type="time" value={localNotifTime}
               onChange={e=>setLocalNotifTime(e.target.value)}
-              style={{border:'2px solid #E4DAFB',borderRadius:10,padding:'7px 10px',
-                fontSize:13,fontWeight:700,color:'#1C1B1F',background:'#F0EAFE',
+              style={{border:`2px solid ${OL}`,borderRadius:10,padding:'7px 10px',
+                fontSize:13,fontWeight:700,color:TX,background:SV,
                 outline:'none',fontFamily:'Nunito,sans-serif'}}/>
             <button onClick={handleNotifTimeChange}
               style={{background:`linear-gradient(90deg,${P},${P2})`,border:'none',
@@ -3133,7 +3406,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
           </div>
         )}
         {!notifEnabled&&(
-          <div style={{fontSize:11,color:'#79747E',background:'#F6F0FF',
+          <div style={{fontSize:11,color:TS,background:SV,
             borderRadius:10,padding:'9px 12px',lineHeight:1.5}}>
             💡 Toggle on to get a daily reminder at your chosen time — no login required. Works when HABITRA is open or installed as PWA.
           </div>
@@ -3142,13 +3415,13 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
 
       {/* Appearance & GATE/ESE Date */}
       <SH ch="Appearance & GATE/ESE Settings"/>
-      <div style={{background:'#FFFFFF',borderRadius:20,border:'1px solid #E4DAFB',
+      <div style={{background:SUR,borderRadius:20,border:`1px solid ${OL}`,
         padding:16,marginBottom:14,boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
-          paddingBottom:12,borderBottom:'1px solid #E4DAFB',marginBottom:12}}>
+          paddingBottom:12,borderBottom:`1px solid ${OL}`,marginBottom:12}}>
           <div>
-            <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F'}}>🌙 Dark Mode</div>
-            <div style={{fontSize:11,color:'#79747E',marginTop:2}}>Easy on eyes during night study</div>
+            <div style={{fontSize:14,fontWeight:700,color:TX}}>🌙 Dark Mode</div>
+            <div style={{fontSize:11,color:TS,marginTop:2}}>Easy on eyes during night study</div>
           </div>
           <button onClick={()=>setDarkMode(v=>!v)}
             style={{width:48,height:26,borderRadius:13,border:'none',cursor:'pointer',
@@ -3158,14 +3431,14 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
               left:darkMode?'25px':'3px',boxShadow:'0 1px 4px rgba(0,0,0,0.2)'}}/>
           </button>
         </div>
-        <div style={{paddingBottom:12,borderBottom:'1px solid #E4DAFB',marginBottom:12}}>
-          <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>Color Palette</div>
-          <div style={{fontSize:11,color:'#79747E',marginBottom:10}}>8 curated combos — minimalist, no neons</div>
+        <div style={{paddingBottom:12,borderBottom:`1px solid ${OL}`,marginBottom:12}}>
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:3}}>Color Palette</div>
+          <div style={{fontSize:11,color:TS,marginBottom:10}}>8 curated combos — minimalist, no neons</div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
             {Object.entries(THEME_PALETTES).map(([id,t])=>(
               <button key={id} onClick={()=>setPaletteId(id)}
-                style={{border:`2px solid ${paletteId===id?t.primary:'#E4DAFB'}`,
-                  background:paletteId===id?t.container:'#FFFFFF',borderRadius:14,padding:10,
+                style={{border:`2px solid ${paletteId===id?t.primary:OL}`,
+                  background:paletteId===id?t.container+33:SV,borderRadius:14,padding:10,
                   cursor:'pointer',textAlign:'left',fontFamily:'Nunito,sans-serif'}}>
                 <div style={{display:'flex',gap:4,marginBottom:7}}>
                   {t.habitColors.slice(0,5).map((c,i)=>(
@@ -3179,12 +3452,12 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
           </div>
         </div>
         <div>
-          <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>🎯 GATE/ESE Target Date</div>
-          <div style={{fontSize:11,color:'#79747E',marginBottom:8}}>Used for Chandan's countdown on the Today screen</div>
+          <div style={{fontSize:14,fontWeight:700,color:TX,marginBottom:3}}>🎯 GATE/ESE Target Date</div>
+          <div style={{fontSize:11,color:TS,marginBottom:8}}>Used for Chandan's countdown on the Today screen</div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
             <input type="date" value={gateInput} onChange={e=>setGateInput(e.target.value)}
-              style={{flex:1,border:'2px solid #E4DAFB',borderRadius:12,padding:'9px 12px',
-                fontSize:13,fontWeight:700,color:'#1C1B1F',background:'#F0EAFE',outline:'none',
+              style={{flex:1,border:`2px solid ${OL}`,borderRadius:12,padding:'9px 12px',
+                fontSize:13,fontWeight:700,color:TX,background:SV,outline:'none',
                 fontFamily:'Nunito,sans-serif'}}/>
             <button onClick={()=>setGateDate(gateInput)}
               style={{background:`linear-gradient(90deg,${P},${P2})`,border:'none',
@@ -3210,7 +3483,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
                 onKeyDown={e=>{if(e.key==='Enter')saveEdit();if(e.key==='Escape')setEditId(null);}}
                 onBlur={saveEdit}
                 style={{flex:1,border:`2px solid ${P}`,borderRadius:10,padding:'7px 10px',
-                  fontSize:13,fontWeight:700,color:TX,background:'#FFF',minWidth:0,
+                  fontSize:13,fontWeight:700,color:TX,background:SUR,minWidth:0,
                   fontFamily:'Nunito,sans-serif',outline:'none'}}/>
             ):(
               <span style={{flex:1,fontSize:13,fontWeight:600,color:TX,
@@ -3246,7 +3519,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
                 onKeyDown={e=>{if(e.key==='Enter')saveEdit();if(e.key==='Escape')setEditId(null);}}
                 onBlur={saveEdit}
                 style={{flex:1,border:'2px solid #43A047',borderRadius:10,padding:'7px 10px',
-                  fontSize:13,fontWeight:700,color:TX,background:'#FFF',minWidth:0,
+                  fontSize:13,fontWeight:700,color:TX,background:SUR,minWidth:0,
                   fontFamily:'Nunito,sans-serif',outline:'none'}}/>
             ):(
               <span style={{flex:1,fontSize:13,fontWeight:600,color:TX,
@@ -3326,9 +3599,9 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
 
       {/* Danger */}
       <SH ch="Danger Zone"/>
-      <div style={{background:SUR,borderRadius:20,border:'2px solid #FFCDD2',
+      <div className="danger-zone-box" style={{background:SUR,borderRadius:20,border:'2px solid #FFCDD2',
         padding:16,marginBottom:28,boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
-        <button onClick={()=>{
+        <button className="danger-reset-btn" onClick={()=>{
           if(window.confirm('⚠️ This clears ALL your data — habits, logs, revisions, XP, badges and study hours.\n\nThis cannot be undone. Are you sure?')){
             const d=freshData();
             setDaily(d.daily);setWeekly(d.weekly);
@@ -3356,7 +3629,7 @@ function WeeklyView({weekly,wlogs,CWK,toggleWeekly}){
   const wPct=weekly.length?Math.round(wDone/weekly.length*100):0;
   return(
     <div>
-      <div style={{background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
+      <div className="weekly-summary-card" style={{background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
         borderRadius:24,padding:'18px',marginBottom:14,
         border:'1px solid #A5D6A7',boxShadow:'0 4px 16px rgba(56,142,60,0.14)'}}>
         <div style={{fontSize:11,fontWeight:700,color:'#2E7D32',marginBottom:3}}>
@@ -3375,7 +3648,7 @@ function WeeklyView({weekly,wlogs,CWK,toggleWeekly}){
       {weekly.map((h,i)=>{
         const done=!!(wlogs[CWK]||{})[i];
         return(
-          <button key={i} className="hbtn" onClick={()=>toggleWeekly(i)}
+          <button key={i} className={`hbtn${done?' weekly-done-btn':''}`} onClick={()=>toggleWeekly(i)}
             style={{display:'flex',alignItems:'center',gap:12,width:'100%',
               background:done?'#E8F5E9':SUR,border:`2px solid ${done?'#43A047':OL}`,
               borderRadius:18,padding:'13px 15px',marginBottom:8,
@@ -3386,7 +3659,7 @@ function WeeklyView({weekly,wlogs,CWK,toggleWeekly}){
               display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s'}}>
               {done&&<Ico d={IC.check} s={16} c='#FFF' sw={3}/>}
             </div>
-            <span style={{flex:1,fontSize:14,fontWeight:done?600:700,
+            <span className={done?'weekly-done-label':''} style={{flex:1,fontSize:14,fontWeight:done?600:700,
               color:done?'#2E7D32':TX,textDecoration:done?'line-through':'none'}}>{h}</span>
           </button>
         );
@@ -3425,8 +3698,7 @@ function App(){
   const [badges,setBadges]=useState(()=>{try{return JSON.parse(localStorage.getItem('habitra_badges')||'[]');}catch(e){return [];}});
   const [notifEnabled,setNotifEnabled]=useState(()=>{try{return localStorage.getItem('habitra_notif')==='1';}catch(e){return false;}});
   const [notifTime,setNotifTime]=useState(()=>{try{return localStorage.getItem('habitra_notif_time')||'09:00';}catch(e){return '09:00';}});
-  const [showInstallBanner,setShowInstallBanner]=useState(false);
-  const [deferredInstallPrompt,setDeferredInstallPrompt]=useState(null);
+
   const prevXpRef=useRef(xp);
   const prevBadgesRef=useRef(badges);
   const [darkMode,setDarkMode]=useState(()=>{try{return localStorage.getItem('habitra_dark')==='1';}catch(e){return false;}});
@@ -3453,7 +3725,7 @@ function App(){
   const pomodoroRef=useRef(null);
   const prevTodayPctRef=useRef(0);
   const fileRef=useRef(null);
-  applyPalette(paletteId);
+  applyPalette(paletteId,darkMode);
 
   const T=now2();
   const TK=dk(T.y,T.m,T.d);
@@ -3499,9 +3771,9 @@ function App(){
   },[darkMode]);
 
   useEffect(()=>{
-    applyPalette(paletteId);
+    applyPalette(paletteId,darkMode);
     try{localStorage.setItem('habitra_palette',paletteId);}catch(e){}
-  },[paletteId]);
+  },[paletteId,darkMode]);
 
   /* Save tasks to localStorage */
   useEffect(()=>{
@@ -3553,15 +3825,7 @@ function App(){
   const isTaskToday=(task)=>task.date===todayStr();
   const PRIORITY_CFG={high:{label:'High',color:'#D32F2F',bg:'#FFEBEE',dot:'#EF5350'},medium:{label:'Med',color:'#E65100',bg:'#FFF3E0',dot:'#FFA726'},low:{label:'Low',color:'#388E3C',bg:'#E8F5E9',dot:'#66BB6A'}};
 
-  /* PWA install prompt */
-  useEffect(()=>{
-    const handler=e=>{e.preventDefault();setDeferredInstallPrompt(e);setShowInstallBanner(true);};
-    window.addEventListener('beforeinstallprompt',handler);
-    // Also show if in standalone mode check fails
-    const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;
-    if(!isStandalone)setTimeout(()=>setShowInstallBanner(true),3000);
-    return()=>window.removeEventListener('beforeinstallprompt',handler);
-  },[]);
+
 
   /* Swipe gesture handler */
   const touchStartX=useRef(null);
@@ -3844,20 +4108,85 @@ function App(){
     ['settings',IC.gear,'More'],
   ];
 
+  /* ── SIDEBAR NAV COMPONENT ── */
+  const SidebarNav=()=>(
+    <nav className="sidebar-nav"
+      style={{background:darkMode?'#1A1726':SUR}}>
+      {/* Logo in sidebar */}
+      <div style={{display:'flex',alignItems:'center',gap:10,padding:'0 14px 24px',marginBottom:8,
+        borderBottom:`1px solid ${darkMode?'#3D3257':OL}`}}>
+        <div style={{width:36,height:36,borderRadius:12,
+          background:`linear-gradient(135deg,${P},${P2})`,
+          display:'flex',alignItems:'center',justifyContent:'center',
+          boxShadow:'0 3px 10px rgba(124,77,255,0.35)',flexShrink:0}}>
+          <Ico d={IC.flame} s={18} c='#FFF' fill='none'/>
+        </div>
+        <div>
+          <div style={{fontSize:16,fontWeight:900,color:P,letterSpacing:-0.3}}>HABITRA</div>
+          <div style={{fontSize:9,color:TS,fontWeight:500,marginTop:-1}}>GATE/ESE 2027</div>
+        </div>
+      </div>
+
+      {NAV.map(([id,icon,lbl])=>{
+        const isActive=view===id;
+        return(
+          <button key={id} onClick={()=>setView(id)}
+            className={`snav-btn${isActive?' active':''}`}
+            style={{color:isActive?P:darkMode?'#BDB8D0':TM,
+              background:isActive?PC:'transparent'}}>
+            <div style={{width:28,height:28,borderRadius:9,flexShrink:0,
+              background:isActive?'transparent':'transparent',
+              display:'flex',alignItems:'center',justifyContent:'center'}}>
+              {typeof icon==='string'&&icon.length<=2?(
+                <span style={{fontSize:17}}>{icon}</span>
+              ):(
+                <Ico d={icon} s={18} c={isActive?P:darkMode?'#BDB8D0':TM}/>
+              )}
+            </div>
+            <span>{lbl}</span>
+            {id==='revision'&&dueRevCount>0&&(
+              <span className="snav-badge"
+                style={{background:'#E65100',color:'#FFF'}}>
+                {dueRevCount>9?'9+':dueRevCount}
+              </span>
+            )}
+            {id==='achieve'&&(
+              <span className="snav-badge"
+                style={{background:P,color:'#FFF'}}>
+                Lv{getLevel(xp)}
+              </span>
+            )}
+          </button>
+        );
+      })}
+
+      {/* Sync status at bottom of sidebar */}
+      <div style={{marginTop:'auto',paddingTop:20,borderTop:`1px solid ${darkMode?'#3D3257':OL}`,marginTop:16}}>
+        <div style={{borderRadius:12,padding:'8px 14px',fontSize:11,fontWeight:700,
+          display:'flex',alignItems:'center',gap:6,
+          background:syncStatus==='synced'?'#E8F5E9':syncStatus==='saving'?'#FFF3E0':'#FFEBEE',
+          color:syncStatus==='synced'?'#2E7D32':syncStatus==='saving'?'#E65100':'#B71C1C'}}>
+          <span>{syncStatus==='synced'?'☁️':syncStatus==='saving'?'⏳':'📴'}</span>
+          <span>{syncStatus==='synced'?'Synced':syncStatus==='saving'?'Saving…':'Offline'}</span>
+        </div>
+      </div>
+    </nav>
+  );
+
   /* Show loading screen while fetching from Firebase */
   if(syncStatus==='loading'){
     return(
       <div style={{minHeight:'100vh',background:BG,display:'flex',flexDirection:'column',
         alignItems:'center',justifyContent:'center',gap:16}}>
-        <div style={{width:56,height:56,borderRadius:18,
+        <div style={{width:64,height:64,borderRadius:20,
           background:`linear-gradient(135deg,${P},${P2})`,
           display:'flex',alignItems:'center',justifyContent:'center',
           boxShadow:'0 6px 20px rgba(124,77,255,0.4)'}}>
-          <Ico d={IC.flame} s={28} c='#FFF' fill='none'/>
+          <Ico d={IC.flame} s={32} c='#FFF' fill='none'/>
         </div>
-        <div style={{fontSize:22,fontWeight:900,color:P,letterSpacing:-0.5}}>HABITRA</div>
+        <div style={{fontSize:24,fontWeight:900,color:P,letterSpacing:-0.5}}>HABITRA</div>
         <div style={{fontSize:13,color:TS,fontWeight:600}}>Syncing your data… ☁️</div>
-        <div style={{width:120,height:4,background:OL,borderRadius:2,overflow:'hidden',marginTop:4}}>
+        <div style={{width:140,height:4,background:OL,borderRadius:2,overflow:'hidden',marginTop:4}}>
           <div style={{width:'60%',height:'100%',background:`linear-gradient(90deg,${P},${P2})`,
             borderRadius:2,animation:'slide 1.2s ease-in-out infinite'}}/>
         </div>
@@ -3868,45 +4197,103 @@ function App(){
 
   return(
     <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
-      style={{minHeight:'100vh',background:darkMode?'#1A1625':BG,paddingBottom:80}}>
+      className="app-shell"
+      style={{background:darkMode?'#1A1625':BG}}>
       {darkMode&&<style>{`
-        body{background:#1A1625!important}
-        .dark-card{background:#2D2640!important;border-color:#3D3257!important}
+        body,#root{background:#0F0D14!important}
+        .sidebar-nav .snav-btn:hover:not(.active){background:rgba(255,255,255,0.06)!important}
+        input,textarea,select{background:#221F33!important;color:#EDE9FF!important;border-color:#332F50!important;}
+        input::placeholder,textarea::placeholder{color:#5A5474!important;}
+        input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7);}
+        /* Weekly summary card */
+        .weekly-summary-card{background:linear-gradient(135deg,#0E2215,#152A1A)!important;border-color:#1E4025!important;}
+        /* Revision due/complete summary cards */
+        .rev-due-card{background:linear-gradient(135deg,#2A1A00,#3A2600)!important;border-color:#5A3800!important;}
+        .rev-due-card div{color:#FFB74D!important;}
+        .rev-done-card{background:linear-gradient(135deg,#0D2010,#152A18)!important;border-color:#1E4025!important;}
+        .rev-done-card div{color:#81C784!important;}
+        /* Stats best-streak / avg30 */
+        .stats-streak-card{background:linear-gradient(135deg,#1E1835,#2A2050)!important;border-color:#3D3260!important;}
+        .stats-avg30-card{background:linear-gradient(135deg,#0D2010,#152A18)!important;border-color:#1E4025!important;}
+        /* Hours summary cards */
+        .hours-self-card{background:linear-gradient(135deg,#0D2010,#152A18)!important;border-color:#1E4025!important;}
+        .hours-class-card{background:linear-gradient(135deg,#0A1A30,#102240)!important;border-color:#1A3460!important;}
+        /* Delete confirm red box */
+        .del-warning-box{background:#2A1010!important;border-color:#4A2020!important;}
+        /* Suggestion item overrides */
+        .suggestion-item-overdues{background:#2A1800!important;border-color:#4A3000!important;}
+        .suggestion-item-overdues>div>div{color:#FFB74D!important;}
+        /* Heatmap legend none */
+        .heatmap-cell-none{background:#1E1B2E!important;color:#3D3A5A!important;}
+        /* Subject mastery heatmap cells — darken all */
+        .subj-mastery-none{background:#1E1B2E!important;color:#4A4568!important;}
+        .subj-mastery-strong{background:#0D2010!important;}
+        .subj-mastery-ok{background:#2A2000!important;}
+        .subj-mastery-weak{background:#2A1500!important;}
+        .subj-mastery-critical{background:#2A0808!important;}
+        /* Study hours chart bars */
+        .hours-bar-bg{background:#221F33!important;}
+        /* Weekly performance bars */
+        .weekly-bar-bg{background:#221F33!important;}
+        /* Absence level cards in modal */
+        .absence-level-btn-selected{background:#2A1010!important;}
+        /* Today habit done label — col.dk is too dark for dark bg */
+        .habit-done-label{color:#A78BFA!important;opacity:0.7;}
+        /* Today habit done row background */
+        .habit-done-row{background:rgba(167,139,250,0.12)!important;}
+        /* Suggestion items (hardcoded light bg from getWeakSuggestions) */
+        .suggestion-item{background:#221F33!important;border-color:#332F50!important;}
+        .suggestion-item>div>div:first-child{color:#C4B5F4!important;}
+        /* Weekly summary card text */
+        .weekly-summary-card div{color:#81C784!important;}
+        .weekly-summary-card span{color:#66BB6A!important;}
+        /* Weekly done buttons */
+        .weekly-done-btn{background:#0D2010!important;border-color:#1E5020!important;}
+        .weekly-done-label{color:#81C784!important;}
+        /* Danger zone */
+        .danger-zone-box{background:#1A0808!important;border-color:#4A1414!important;}
+        .danger-reset-btn{background:#2A0F0F!important;border-color:#4A2020!important;color:#FF8A80!important;}
+        /* Task form inputs - critical for usability */
+        .task-input-text{background:#211E30!important;color:#EDE9FF!important;border-color:#332F50!important;}
+        /* Hours day-by-day list rows */
+        .hours-day-exceeded{background:#0A1A30!important;border-color:#1A3460!important;}
+        .hours-day-perfect{background:#0D2010!important;border-color:#1A4020!important;}
+        .hours-day-below{background:#2A1800!important;border-color:#4A3000!important;}
+        .hours-day-none{background:#1A1726!important;border-color:#2E2842!important;}
+        /* Hours achievement badge */  
+        .hours-badge-excellent{background:#0A1A30!important;border-color:#1A3460!important;}
+        .hours-badge-excellent div{color:#90CAF9!important;}
+        .hours-badge-perfect{background:#0D2010!important;border-color:#1A4020!important;}
+        .hours-badge-perfect div{color:#A5D6A7!important;}
+        .hours-badge-logged{background:#2A1800!important;border-color:#4A3000!important;}
+        .hours-badge-logged div{color:#FFB74D!important;}
+        /* Absence modal level selector unselected */
+        .absence-level-btn-unsel{background:#1E1B2E!important;border-color:#2E2842!important;}
+        /* Heatmap bar chart bg */
+        .hours-bar-container{background:#1E1B2E!important;border-color:#2E2842!important;}
+        /* XP how-to-earn guide items */
+        .xp-guide-item{background:#221F33!important;}
+        .xp-guide-item span:first-child{color:#C4B5F4!important;}
+        /* Tab bars active state text */
+        .tab-active-text{color:#C4B5F4!important;}
+        /* Revision card expand area */
+        .rev-card-expand{background:#1E1B2E!important;}
+        /* Subject filter chips unselected */
+        .subj-chip-unsel{background:#1E1B2E!important;color:#C4B5F4!important;border-color:#2E2842!important;}
+        /* Search input in revision */
+        .rev-search-input{background:#1E1B2E!important;color:#EDE9FF!important;border-color:#2E2842!important;}
+        /* Weekly done label fix */
+        body.dark .weekly-done-label{color:#81C784!important;}
+        /* Compact study hours strip labels */
+        body.dark .study-hours-label{color:#EDE9FF!important;}
       `}</style>}
 
-      {/* PWA INSTALL BANNER */}
-      {showInstallBanner&&!window.matchMedia('(display-mode: standalone)').matches&&(
-        <div style={{background:`linear-gradient(90deg,${P},${P2})`,
-          padding:'10px 16px',display:'flex',alignItems:'center',gap:10,
-          position:'sticky',top:0,zIndex:50}}>
-          <span style={{fontSize:20}}>📱</span>
-          <div style={{flex:1,color:'#FFF'}}>
-            <div style={{fontSize:12,fontWeight:800}}>Add HABITRA to Home Screen</div>
-            <div style={{fontSize:10,opacity:0.8}}>Works offline • No app store needed</div>
-          </div>
-          <button onClick={async()=>{
-            if(deferredInstallPrompt){
-              deferredInstallPrompt.prompt();
-              const{outcome}=await deferredInstallPrompt.userChoice;
-              setDeferredInstallPrompt(null);
-            }
-            setShowInstallBanner(false);
-          }} style={{background:'rgba(255,255,255,0.25)',border:'1px solid rgba(255,255,255,0.5)',
-            borderRadius:10,padding:'6px 12px',color:'#FFF',fontWeight:800,fontSize:11,
-            cursor:'pointer',fontFamily:'Nunito,sans-serif',flexShrink:0}}>
-            Install
-          </button>
-          <button onClick={()=>setShowInstallBanner(false)}
-            style={{background:'none',border:'none',color:'rgba(255,255,255,0.7)',
-              fontSize:18,cursor:'pointer',padding:'0 4px',lineHeight:1}}>×</button>
-        </div>
-      )}
+
 
       {/* HEADER */}
-      <div style={{background:darkMode?'#2D2640':SUR,padding:'12px 16px 10px',
-        borderBottom:`1px solid ${darkMode?'#3D3257':OL}`,position:'sticky',top:0,zIndex:30,
-        display:'flex',alignItems:'center',justifyContent:'space-between',
-        boxShadow:'0 2px 10px rgba(103,80,164,0.09)'}}>
+      <div className="app-header"
+        style={{background:darkMode?'#2D2640':SUR,
+          borderBottom:`1px solid ${darkMode?'#3D3257':OL}`}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <div style={{width:36,height:36,borderRadius:12,
             background:`linear-gradient(135deg,${P},${P2})`,
@@ -3915,8 +4302,10 @@ function App(){
             <Ico d={IC.flame} s={18} c='#FFF' fill='none'/>
           </div>
           <div>
-            <div style={{fontSize:16,fontWeight:900,color:P,letterSpacing:-0.3}}>HABITRA</div>
-            <div style={{fontSize:10,color:TS,fontWeight:500,marginTop:-1}}>
+            <div className="header-title-main"
+              style={{fontSize:16,fontWeight:900,color:P,letterSpacing:-0.3}}>HABITRA</div>
+            <div className="header-title-sub"
+              style={{fontSize:10,color:TS,fontWeight:500,marginTop:-1}}>
               Chandan Kumar · GATE/ESE 2027
             </div>
           </div>
@@ -3934,6 +4323,7 @@ function App(){
               🔁 {dueRevCount}
             </div>
           )}
+          {/* Sync pill — hidden on desktop (sidebar shows it) */}
           <div style={{
               borderRadius:20,padding:'5px 11px',fontSize:11,fontWeight:800,
               display:'flex',alignItems:'center',gap:5,
@@ -3945,95 +4335,102 @@ function App(){
         </div>
       </div>
 
-      {/* CONTENT */}
-      <div style={{padding:'14px 14px 0',maxWidth:540,margin:'0 auto'}}>
+      {/* MAIN LAYOUT — sidebar + content */}
+      <div className="main-layout">
 
-        {view==='today'&&(
-          <TodayView daily={daily} logs={logs} TK={TK} toggleToday={toggleToday}
-            revEntries={revEntries} onRevToggle={toggleRevision}
-            todayDone={todayDone} todayPct={todayPct}
-            bestStr={bestStr} avg30={avg30}
-            gateCountdown={gateCountdown} gateDate={gateDate}
-            todayHours={todayHours} weekHours={weekHours} totalHours={totalHours}
-            todayClassHours={todayClassHours} weekClassHours={weekClassHours} totalClassHours={totalClassHours}
-            showHoursInput={showHoursInput} setShowHoursInput={setShowHoursInput}
-            hoursInput={hoursInput} setHoursInput={setHoursInput} logHours={logHours}
-            showClassInput={showClassInput} setShowClassInput={setShowClassInput}
-            classInput={classInput} setClassInput={setClassInput} logClassHours={logClassHours}
-            darkMode={darkMode}
-            suggestions={weakSuggestions}
-            xp={xp} badges={badges}
-            tasks={tasks} showTaskInput={showTaskInput} setShowTaskInput={setShowTaskInput}
-            taskText={taskText} setTaskText={setTaskText}
-            taskDate={taskDate} setTaskDate={setTaskDate}
-            taskPriority={taskPriority} setTaskPriority={setTaskPriority}
-            taskNotes={taskNotes} setTaskNotes={setTaskNotes}
-            taskRecur={taskRecur} setTaskRecur={setTaskRecur}
-            taskReminder={taskReminder} setTaskReminder={setTaskReminder}
-            addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} updateTask={updateTask}
-            isTaskOverdue={isTaskOverdue} isTaskToday={isTaskToday}
-            showCompletedTasks={showCompletedTasks} setShowCompletedTasks={setShowCompletedTasks}
-            expandedTaskId={expandedTaskId} setExpandedTaskId={setExpandedTaskId}
-            editingTaskId={editingTaskId} setEditingTaskId={setEditingTaskId}
-            PRIORITY_CFG={PRIORITY_CFG}
-            pomodoroRunning={false} setPomodoroRunning={()=>{}}
-            pomodoroSeconds={25*60} setPomodoroSeconds={()=>{}}
-            pomodoroMode={'work'} setPomodoroMode={()=>{}}
-            pomodoroCount={0}
-            absences={absences}
-            onClearAbsence={(date)=>{
-              const next={...absences};delete next[date];
-              setAbsences(next);
-              try{localStorage.setItem('habitra_absences',JSON.stringify(next));}catch(e){}
-            }}
-            studyHours={studyHours}
-            classHoursLog={classHoursLog}/>
-        )}
-        {view==='weekly'&&(
-          <WeeklyView weekly={weekly} wlogs={wlogs} CWK={CWK} toggleWeekly={toggleWeekly}/>
-        )}
-        {view==='revision'&&(
-          <RevisionView entries={revEntries} onToggle={toggleRevision}
-            onDelete={deleteRevEntry} onAdd={addRevEntry}/>
-        )}
-        {view==='stats'&&(
-          <StatsView daily={daily} logs={logs} revEntries={revEntries}
-            studyHours={studyHours} classHoursLog={classHoursLog}/>
-        )}
-        {view==='achieve'&&(
-          <GamificationView xp={xp} badges={badges}
-            daily={daily} logs={logs} revEntries={revEntries} studyHours={studyHours}/>
-        )}
-        {view==='settings'&&(
-          <SettingsView daily={daily} weekly={weekly}
-            setDaily={setDaily} setWeekly={setWeekly}
-            setLogs={setLogs} setRevEntries={setRevEntries}
-            logs={logs} revEntries={revEntries} wlogs={wlogs} setWlogs={setWlogs}
-            addType={addType} setAddType={setAddType}
-            newName={newName} setNewName={setNewName} doAdd={doAdd}
-            editId={editId} setEditId={setEditId} editTxt={editTxt}
-            setEditTxt={setEditTxt} saveEdit={saveEdit}
-            delConf={delConf} setDelConf={setDelConf} doDelete={doDelete}
-            moveH={moveH} pasteOpen={pasteOpen} setPasteOpen={setPasteOpen}
-            pasteTxt={pasteTxt} setPasteTxt={setPasteTxt} doPasteRestore={doPasteRestore}
-            doExport={doExport} doCopy={doCopy} doFileRestore={doFileRestore} fileRef={fileRef}
-            darkMode={darkMode} setDarkMode={setDarkMode}
-            gateDate={gateDate} setGateDate={setGateDate}
-            notifEnabled={notifEnabled} setNotifEnabled={setNotifEnabled}
-            notifTime={notifTime} setNotifTime={setNotifTime}
-            paletteId={paletteId} setPaletteId={setPaletteId}
-            TK={TK} xp={xp} badges={badges}
-            totalHours={totalHours} weekHours={weekHours}
-            gateCountdown={gateCountdown} todayPct={todayPct}
-            bestStr={bestStr} avg30={avg30}
-            absences={absences} setAbsences={setAbsences}
-            studyHours={studyHours}/>
-        )}
+        {/* DESKTOP SIDEBAR */}
+        <SidebarNav/>
+
+        {/* CONTENT */}
+        <div className="main-content">
+
+          {view==='today'&&(
+            <TodayView daily={daily} logs={logs} TK={TK} toggleToday={toggleToday}
+              revEntries={revEntries} onRevToggle={toggleRevision}
+              todayDone={todayDone} todayPct={todayPct}
+              bestStr={bestStr} avg30={avg30}
+              gateCountdown={gateCountdown} gateDate={gateDate}
+              todayHours={todayHours} weekHours={weekHours} totalHours={totalHours}
+              todayClassHours={todayClassHours} weekClassHours={weekClassHours} totalClassHours={totalClassHours}
+              showHoursInput={showHoursInput} setShowHoursInput={setShowHoursInput}
+              hoursInput={hoursInput} setHoursInput={setHoursInput} logHours={logHours}
+              showClassInput={showClassInput} setShowClassInput={setShowClassInput}
+              classInput={classInput} setClassInput={setClassInput} logClassHours={logClassHours}
+              darkMode={darkMode}
+              suggestions={weakSuggestions}
+              xp={xp} badges={badges}
+              tasks={tasks} showTaskInput={showTaskInput} setShowTaskInput={setShowTaskInput}
+              taskText={taskText} setTaskText={setTaskText}
+              taskDate={taskDate} setTaskDate={setTaskDate}
+              taskPriority={taskPriority} setTaskPriority={setTaskPriority}
+              taskNotes={taskNotes} setTaskNotes={setTaskNotes}
+              taskRecur={taskRecur} setTaskRecur={setTaskRecur}
+              taskReminder={taskReminder} setTaskReminder={setTaskReminder}
+              addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} updateTask={updateTask}
+              isTaskOverdue={isTaskOverdue} isTaskToday={isTaskToday}
+              showCompletedTasks={showCompletedTasks} setShowCompletedTasks={setShowCompletedTasks}
+              expandedTaskId={expandedTaskId} setExpandedTaskId={setExpandedTaskId}
+              editingTaskId={editingTaskId} setEditingTaskId={setEditingTaskId}
+              PRIORITY_CFG={PRIORITY_CFG}
+              pomodoroRunning={false} setPomodoroRunning={()=>{}}
+              pomodoroSeconds={25*60} setPomodoroSeconds={()=>{}}
+              pomodoroMode={'work'} setPomodoroMode={()=>{}}
+              pomodoroCount={0}
+              absences={absences}
+              onClearAbsence={(date)=>{
+                const next={...absences};delete next[date];
+                setAbsences(next);
+                try{localStorage.setItem('habitra_absences',JSON.stringify(next));}catch(e){}
+              }}
+              studyHours={studyHours}
+              classHoursLog={classHoursLog}/>
+          )}
+          {view==='weekly'&&(
+            <WeeklyView weekly={weekly} wlogs={wlogs} CWK={CWK} toggleWeekly={toggleWeekly}/>
+          )}
+          {view==='revision'&&(
+            <RevisionView entries={revEntries} onToggle={toggleRevision}
+              onDelete={deleteRevEntry} onAdd={addRevEntry}/>
+          )}
+          {view==='stats'&&(
+            <StatsView daily={daily} logs={logs} revEntries={revEntries}
+              studyHours={studyHours} classHoursLog={classHoursLog}/>
+          )}
+          {view==='achieve'&&(
+            <GamificationView xp={xp} badges={badges}
+              daily={daily} logs={logs} revEntries={revEntries} studyHours={studyHours}/>
+          )}
+          {view==='settings'&&(
+            <SettingsView daily={daily} weekly={weekly}
+              setDaily={setDaily} setWeekly={setWeekly}
+              setLogs={setLogs} setRevEntries={setRevEntries}
+              logs={logs} revEntries={revEntries} wlogs={wlogs} setWlogs={setWlogs}
+              addType={addType} setAddType={setAddType}
+              newName={newName} setNewName={setNewName} doAdd={doAdd}
+              editId={editId} setEditId={setEditId} editTxt={editTxt}
+              setEditTxt={setEditTxt} saveEdit={saveEdit}
+              delConf={delConf} setDelConf={setDelConf} doDelete={doDelete}
+              moveH={moveH} pasteOpen={pasteOpen} setPasteOpen={setPasteOpen}
+              pasteTxt={pasteTxt} setPasteTxt={setPasteTxt} doPasteRestore={doPasteRestore}
+              doExport={doExport} doCopy={doCopy} doFileRestore={doFileRestore} fileRef={fileRef}
+              darkMode={darkMode} setDarkMode={setDarkMode}
+              gateDate={gateDate} setGateDate={setGateDate}
+              notifEnabled={notifEnabled} setNotifEnabled={setNotifEnabled}
+              notifTime={notifTime} setNotifTime={setNotifTime}
+              paletteId={paletteId} setPaletteId={setPaletteId}
+              TK={TK} xp={xp} badges={badges}
+              totalHours={totalHours} weekHours={weekHours}
+              gateCountdown={gateCountdown} todayPct={todayPct}
+              bestStr={bestStr} avg30={avg30}
+              absences={absences} setAbsences={setAbsences}
+              studyHours={studyHours}/>
+          )}
+        </div>
       </div>
 
-      {/* FAB */}
+      {/* FAB — Weekly */}
       {view==='weekly'&&(
-        <button onClick={()=>setAddType('weekly')}
+        <button className="fab-btn" onClick={()=>setAddType('weekly')}
           style={{position:'fixed',bottom:82,right:16,
             width:52,height:52,borderRadius:17,
             background:`linear-gradient(135deg,${P},${P2})`,
@@ -4043,8 +4440,9 @@ function App(){
           <Ico d={IC.plus} s={24} c='#FFF'/>
         </button>
       )}
+      {/* FAB — Revision */}
       {view==='revision'&&(
-        <button onClick={()=>setShowAddRev(true)}
+        <button className="fab-btn" onClick={()=>setShowAddRev(true)}
           style={{position:'fixed',bottom:82,right:16,
             width:52,height:52,borderRadius:17,
             background:'linear-gradient(135deg,#0097A7,#00BCD4)',
@@ -4055,12 +4453,11 @@ function App(){
         </button>
       )}
 
-      {/* BOTTOM NAV */}
-      <nav style={{position:'fixed',bottom:0,left:0,right:0,
-        background:darkMode?'rgba(45,38,64,0.97)':'rgba(255,255,255,0.97)',backdropFilter:'blur(12px)',
-        borderTop:`1px solid ${darkMode?'#3D3257':OL}`,display:'flex',zIndex:25,
-        boxShadow:'0 -2px 14px rgba(103,80,164,0.09)',
-        paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
+      {/* BOTTOM NAV — mobile & tablet only */}
+      <nav className="bottom-nav"
+        style={{background:darkMode?'rgba(45,38,64,0.97)':'rgba(255,255,255,0.97)',
+          backdropFilter:'blur(12px)',
+          borderTop:`1px solid ${darkMode?'#3D3257':OL}`}}>
         {NAV.map(([id,icon,lbl])=>(
           <button key={id} onClick={()=>setView(id)}
             style={{flex:1,padding:'8px 2px 6px',background:'none',border:'none',
@@ -4139,7 +4536,7 @@ function App(){
       {delConf&&(
         <BSModal onClose={()=>setDelConf(null)}>
           <div style={{fontSize:17,fontWeight:900,color:'#B71C1C',marginBottom:8}}>Delete habit?</div>
-          <div style={{fontSize:13,color:TM,marginBottom:20,
+          <div className="del-warning-box" style={{fontSize:13,color:TM,marginBottom:20,
             background:'#FFEBEE',borderRadius:12,padding:'12px 14px',lineHeight:1.5}}>
             <b>"{delConf.type==='daily'?daily[delConf.idx]:weekly[delConf.idx]}"</b><br/>
             <span style={{color:'#D32F2F',fontSize:12}}>All log history for this habit will be permanently deleted.</span>
