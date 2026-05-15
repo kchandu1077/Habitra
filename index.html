@@ -132,10 +132,61 @@ body.dark #root{background:#1A1625}
 const {useState,useEffect,useCallback,useMemo,useRef} = React;
 
 /* ── THEME ─────────────────────────────────────────── */
-const P='#6750A4',PC='#EADDFF',BG='#F6F0FF',SUR='#FFFFFF',
+let P='#6750A4',P2='#9C68FF',PC='#EADDFF',BG='#F6F0FF',SUR='#FFFFFF',
       SV='#F0EAFE',OL='#E4DAFB',TX='#1C1B1F',TM='#49454F',TS='#79747E';
 
-const HCOLS=[
+const THEME_PALETTES={
+  classic:{
+    name:'Classic Focus',primary:'#6750A4',primary2:'#9C68FF',container:'#EADDFF',
+    bg:'#F6F0FF',surface:'#FFFFFF',surfaceVariant:'#F0EAFE',outline:'#E4DAFB',
+    habitColors:[
+      {bg:'#EDE7FF',f:'#7C4DFF',dk:'#21005D',lt:'#F5F0FF'},
+      {bg:'#FFF3E0',f:'#F57C00',dk:'#4A1800',lt:'#FFF9F0'},
+      {bg:'#E0F7FA',f:'#0097A7',dk:'#002B30',lt:'#F0FBFC'},
+      {bg:'#FCE4EC',f:'#C2185B',dk:'#4A0020',lt:'#FEF0F5'},
+      {bg:'#E8F5E9',f:'#388E3C',dk:'#1B4008',lt:'#F2FAF2'},
+      {bg:'#E3F2FD',f:'#1565C0',dk:'#001E3C',lt:'#EFF6FE'},
+    ]
+  },
+  sunrise:{
+    name:'Sunrise Multi',primary:'#E64A19',primary2:'#F9A825',container:'#FFE0B2',
+    bg:'#FFF7ED',surface:'#FFFFFF',surfaceVariant:'#FFF3E0',outline:'#FFD7A8',
+    habitColors:[
+      {bg:'#FFF3E0',f:'#F57C00',dk:'#4A1800',lt:'#FFF9F0'},
+      {bg:'#E0F7FA',f:'#0097A7',dk:'#002B30',lt:'#F0FBFC'},
+      {bg:'#FCE4EC',f:'#C2185B',dk:'#4A0020',lt:'#FEF0F5'},
+      {bg:'#E8F5E9',f:'#388E3C',dk:'#1B4008',lt:'#F2FAF2'},
+      {bg:'#EDE7FF',f:'#7C4DFF',dk:'#21005D',lt:'#F5F0FF'},
+      {bg:'#E3F2FD',f:'#1565C0',dk:'#001E3C',lt:'#EFF6FE'},
+    ]
+  },
+  ocean:{
+    name:'Ocean Pop',primary:'#00897B',primary2:'#1565C0',container:'#B2EBF2',
+    bg:'#F0FBFC',surface:'#FFFFFF',surfaceVariant:'#E0F7FA',outline:'#B2DFDB',
+    habitColors:[
+      {bg:'#E0F7FA',f:'#0097A7',dk:'#002B30',lt:'#F0FBFC'},
+      {bg:'#E3F2FD',f:'#1565C0',dk:'#001E3C',lt:'#EFF6FE'},
+      {bg:'#E8F5E9',f:'#388E3C',dk:'#1B4008',lt:'#F2FAF2'},
+      {bg:'#FFF3E0',f:'#F57C00',dk:'#4A1800',lt:'#FFF9F0'},
+      {bg:'#FCE4EC',f:'#C2185B',dk:'#4A0020',lt:'#FEF0F5'},
+      {bg:'#EDE7FF',f:'#7C4DFF',dk:'#21005D',lt:'#F5F0FF'},
+    ]
+  },
+  candy:{
+    name:'Candy Sprint',primary:'#C2185B',primary2:'#7C4DFF',container:'#F8BBD0',
+    bg:'#FFF5FA',surface:'#FFFFFF',surfaceVariant:'#FCE4EC',outline:'#F8BBD0',
+    habitColors:[
+      {bg:'#FCE4EC',f:'#C2185B',dk:'#4A0020',lt:'#FEF0F5'},
+      {bg:'#EDE7FF',f:'#7C4DFF',dk:'#21005D',lt:'#F5F0FF'},
+      {bg:'#E0F7FA',f:'#0097A7',dk:'#002B30',lt:'#F0FBFC'},
+      {bg:'#FFF3E0',f:'#F57C00',dk:'#4A1800',lt:'#FFF9F0'},
+      {bg:'#E8F5E9',f:'#388E3C',dk:'#1B4008',lt:'#F2FAF2'},
+      {bg:'#E3F2FD',f:'#1565C0',dk:'#001E3C',lt:'#EFF6FE'},
+    ]
+  }
+};
+
+let HCOLS=[
   {bg:'#EDE7FF',f:'#7C4DFF',dk:'#21005D',lt:'#F5F0FF'},
   {bg:'#FFF3E0',f:'#F57C00',dk:'#4A1800',lt:'#FFF9F0'},
   {bg:'#E0F7FA',f:'#0097A7',dk:'#002B30',lt:'#F0FBFC'},
@@ -144,6 +195,13 @@ const HCOLS=[
   {bg:'#E3F2FD',f:'#1565C0',dk:'#001E3C',lt:'#EFF6FE'},
 ];
 const hc=i=>HCOLS[i%6];
+function applyPalette(id){
+  const t=THEME_PALETTES[id]||THEME_PALETTES.classic;
+  P=t.primary;P2=t.primary2;PC=t.container;BG=t.bg;SUR=t.surface;SV=t.surfaceVariant;OL=t.outline;
+  HCOLS=t.habitColors;
+  try{document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.primary);}catch(e){}
+  return t;
+}
 
 const SUBJ_COLORS={
   'SOM':'#7C4DFF','FM':'#0097A7','SM':'#388E3C','RCC':'#F57C00',
@@ -284,7 +342,7 @@ function getWeakSuggestions({revEntries,logs,daily,studyHours}){
     const yk=dk(yesterday.getFullYear(),yesterday.getMonth(),yesterday.getDate());
     if(!studyHours[yk]){
       tips.push({icon:'📚',color:'#1565C0',bg:'#E3F2FD',border:'#90CAF9',
-        msg:'No study hours logged today',action:'Go to Today → tap + Log to track time',urgency:'low'});
+      msg:'No study hours logged today',action:'Go to Today -> tap Log to track time',urgency:'low'});
     }
   }
 
@@ -439,9 +497,9 @@ function HeatmapGrid({logs,daily,weeks=15}){
   const cellColor=pct=>{
     if(pct===0)return '#EDE7FF';
     if(pct<0.4)return '#C4B5F4';
-    if(pct<0.7)return '#9C68FF';
-    if(pct<1)return '#7C4DFF';
-    return '#4A148C';
+    if(pct<0.7)return P2;
+    if(pct<1)return P;
+    return '#2E7D32';
   };
 
   return(
@@ -496,7 +554,7 @@ function GamificationView({xp,badges,daily,logs,revEntries,studyHours}){
   return(
     <div>
       {/* Level Card */}
-      <div style={{background:'linear-gradient(135deg,#6750A4,#9C68FF)',
+      <div style={{background:`linear-gradient(135deg,${P},${P2})`,
         borderRadius:24,padding:'20px',marginBottom:14,
         boxShadow:'0 8px 28px rgba(103,80,164,0.35)'}}>
         <div style={{display:'flex',alignItems:'center',gap:14}}>
@@ -926,7 +984,7 @@ function AddRevisionModal({onAdd,onClose}){
         <div style={{display:'flex',gap:9,marginTop:4}}>
           <button onClick={doAdd}
             style={{flex:1,padding:'13px',
-              background:`linear-gradient(90deg,${P},#9C68FF)`,
+              background:`linear-gradient(90deg,${P},${P2})`,
               border:'none',borderRadius:14,color:'#FFF',
               fontWeight:900,fontSize:14,cursor:'pointer',
               fontFamily:'Nunito,sans-serif'}}>
@@ -1159,7 +1217,7 @@ function StatsView({daily,logs,revEntries}){
                       </div>
                       <div style={{width:'100%',borderRadius:'3px 3px 0 0',
                         height:`${Math.max(4,dayAvgs[i])}%`,minHeight:4,
-                        background:dayAvgs[i]===best?`linear-gradient(0deg,${P},#B388FF)`:OL,
+                        background:dayAvgs[i]===best?`linear-gradient(0deg,${P},${P2})`:OL,
                         transition:'height 0.4s'}}/>
                       <div style={{fontSize:8,fontWeight:dayAvgs[i]===best?800:500,
                         color:dayAvgs[i]===best?P:TS}}>{day}</div>
@@ -1299,17 +1357,14 @@ function StatsView({daily,logs,revEntries}){
 /* ═══════════════════════════════════════════════════
    TODAY VIEW — Minimalist redesign
    ═══════════════════════════════════════════════════ */
-function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,todayDone,todayPct,bestStr,avg30,
-  gateCountdown,gateDate,setGateDate,todayHours,weekHours,totalHours,
+function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,todayPct,bestStr,avg30,
+  gateCountdown,gateDate,todayHours,weekHours,totalHours,
   showHoursInput,setShowHoursInput,hoursInput,setHoursInput,logHours,darkMode,
   suggestions,xp,badges}){
   const dueEntries=useMemo(()=>getTodayDueEntries(revEntries),[revEntries]);
   const quote=useMemo(()=>todayQuote(),[]);
-  const [editGate,setEditGate]=useState(false);
-  const [gateInput,setGateInput]=useState(gateDate);
-  const [showChart,setShowChart]=useState(false);
   const [showDueRevs,setShowDueRevs]=useState(true);
-  const gateColor=gateCountdown<=30?'#FF5722':gateCountdown<=90?'#F57C00':'#6750A4';
+  const gateColor=gateCountdown<=30?'#FF5722':gateCountdown<=90?'#F57C00':P;
 
   return(
     <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -1319,37 +1374,23 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,toda
         boxShadow:'0 1px 6px rgba(103,80,164,0.06)',overflow:'hidden'}}>
 
         {/* Gate countdown row */}
-        <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',
-          borderBottom:'1px solid #F0EAFE'}}>
-          <div style={{width:36,height:36,borderRadius:12,
-            background:gateColor+'18',display:'flex',alignItems:'center',
-            justifyContent:'center',flexShrink:0}}>
-            <span style={{fontSize:18}}>🎯</span>
+        <div style={{display:'flex',alignItems:'center',gap:13,padding:'14px 16px',
+          borderBottom:'1px solid #F0EAFE',
+          background:`linear-gradient(135deg,${gateColor}16,#FFFFFF 68%)`}}>
+          <div style={{width:48,height:48,borderRadius:15,
+            background:gateColor,display:'flex',alignItems:'center',
+            justifyContent:'center',flexShrink:0,boxShadow:`0 5px 16px ${gateColor}36`}}>
+            <span style={{fontSize:22,color:'#FFF',fontWeight:900,lineHeight:1}}>{gateCountdown}</span>
           </div>
           <div style={{flex:1}}>
-            <div style={{fontSize:10,fontWeight:700,color:'#9E94C0',letterSpacing:1,textTransform:'uppercase'}}>GATE Countdown</div>
-            <div style={{fontSize:15,fontWeight:900,color:gateColor,lineHeight:1.2}}>
+            <div style={{fontSize:10,fontWeight:900,color:gateColor,letterSpacing:1.2,textTransform:'uppercase'}}>GATE Countdown</div>
+            <div style={{fontSize:20,fontWeight:900,color:gateColor,lineHeight:1.08}}>
               {gateCountdown} days left
-              {editGate&&(
-                <span style={{marginLeft:8}}>
-                  <input type="date" value={gateInput} onChange={e=>setGateInput(e.target.value)}
-                    style={{border:'1px solid #E4DAFB',borderRadius:8,padding:'2px 7px',fontSize:11,
-                      fontWeight:700,color:'#1C1B1F',background:'#F6F0FF',outline:'none',
-                      fontFamily:'Nunito,sans-serif',marginRight:5}}/>
-                  <button onClick={()=>{setGateDate(gateInput);setEditGate(false);}}
-                    style={{background:P,border:'none',borderRadius:8,padding:'3px 10px',color:'#FFF',
-                      fontWeight:800,fontSize:11,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>Save</button>
-                </span>
-              )}
             </div>
-            <div style={{fontSize:10,color:'#9E94C0',fontWeight:500}}>{gateDate}</div>
+            <div style={{fontSize:10,color:gateColor,fontWeight:800,marginTop:3,lineHeight:1.35}}>
+              {gateCountdown<=30?'Final stretch - every session counts':gateCountdown<=90?'Serious prep window - protect today':'Keep the chain strong'} | Exam: {gateDate}
+            </div>
           </div>
-          {!editGate&&(
-            <button onClick={()=>{setGateInput(gateDate);setEditGate(true);}}
-              style={{background:'#F6F0FF',border:'none',borderRadius:10,padding:'5px 10px',
-                cursor:'pointer',fontSize:11,fontWeight:700,color:'#9E94C0',
-                fontFamily:'Nunito,sans-serif'}}>✏️ Edit</button>
-          )}
         </div>
 
         {/* Study Hours row */}
@@ -1374,7 +1415,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,toda
             style={{background:showHoursInput?'#FFEBEE':'#E8F5E9',border:'none',
               borderRadius:10,padding:'6px 12px',cursor:'pointer',color:showHoursInput?'#D32F2F':'#2E7D32',
               fontSize:11,fontWeight:800,flexShrink:0,fontFamily:'Nunito,sans-serif'}}>
-            {showHoursInput?'Cancel':'+ Log'}
+            {showHoursInput?'Cancel':'Log'}
           </button>
         </div>
 
@@ -1398,7 +1439,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,toda
       </div>
 
       {/* ── HERO CARD: Progress + Stats + Quote ── */}
-      <div style={{background:'linear-gradient(135deg,#6750A4 0%,#8B5CF6 100%)',
+      <div style={{background:`linear-gradient(135deg,${P} 0%,${P2} 100%)`,
         borderRadius:20,padding:'18px 20px',
         boxShadow:'0 6px 24px rgba(103,80,164,0.22)'}}>
         <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:12}}>
@@ -1550,42 +1591,6 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,chart7,toda
         })}
       </div>
 
-      {/* ── 7-DAY CHART (collapsible) ── */}
-      <div style={{background:'#FFFFFF',borderRadius:16,border:'1px solid #EDE8FB',
-        overflow:'hidden',boxShadow:'0 1px 6px rgba(103,80,164,0.06)'}}>
-        <button onClick={()=>setShowChart(v=>!v)}
-          style={{display:'flex',alignItems:'center',gap:10,width:'100%',
-            padding:'12px 16px',background:'none',border:'none',cursor:'pointer',textAlign:'left'}}>
-          <span style={{flex:1,fontSize:10,fontWeight:800,color:'#9E94C0',letterSpacing:1.2,
-            textTransform:'uppercase'}}>7-Day History</span>
-          <div style={{display:'flex',gap:3,alignItems:'flex-end',height:16}}>
-            {chart7.map((d,i)=>(
-              <div key={i} style={{width:6,borderRadius:'2px 2px 0 0',
-                height:`${Math.max(20,d.pct)/100*16}px`,
-                background:d.isToday?P:'#D4C9F5'}}/>
-            ))}
-          </div>
-          <Ico d={showChart?IC.up:IC.down} s={13} c='#9E94C0'/>
-        </button>
-        {showChart&&(
-          <div style={{padding:'4px 16px 14px'}}>
-            <div style={{display:'flex',gap:5,height:80,alignItems:'flex-end'}}>
-              {chart7.map((d,i)=>(
-                <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
-                  <div style={{fontSize:9,fontWeight:700,color:d.isToday?P:TS}}>{d.pct}%</div>
-                  <div style={{width:'100%',borderRadius:'4px 4px 0 0',
-                    height:`${Math.max(4,d.pct)}%`,minHeight:4,
-                    background:d.isToday?`linear-gradient(0deg,${P},#A78BFA)`:'#E4DAFB',
-                    transition:'height 0.4s'}}/>
-                  <div style={{fontSize:9,fontWeight:d.isToday?800:500,
-                    color:d.isToday?P:TS}}>{d.day}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* ── SMART SUGGESTIONS (collapsible) ── */}
       <SuggestionsCard suggestions={suggestions}/>
 
@@ -1601,7 +1606,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
   editId,setEditId,editTxt,setEditTxt,saveEdit,delConf,setDelConf,doDelete,
   moveH,pasteOpen,setPasteOpen,pasteTxt,setPasteTxt,doPasteRestore,
   doExport,doCopy,doFileRestore,fileRef,darkMode,setDarkMode,gateDate,setGateDate,
-  notifEnabled,setNotifEnabled,notifTime,setNotifTime}){
+  notifEnabled,setNotifEnabled,notifTime,setNotifTime,paletteId,setPaletteId}){
   const [gateInput,setGateInput]=useState(gateDate);
   const [localNotifTime,setLocalNotifTime]=useState(notifTime);
 
@@ -1643,7 +1648,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
           </div>
           <button onClick={handleNotifToggle}
             style={{width:48,height:26,borderRadius:13,border:'none',cursor:'pointer',
-              background:notifEnabled?'#6750A4':'#E4DAFB',position:'relative',
+              background:notifEnabled?P:'#E4DAFB',position:'relative',
               transition:'background 0.2s',flexShrink:0}}>
             <div style={{width:20,height:20,borderRadius:'50%',background:'#FFF',
               position:'absolute',top:3,transition:'left 0.2s',
@@ -1659,7 +1664,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
                 fontSize:13,fontWeight:700,color:'#1C1B1F',background:'#F0EAFE',
                 outline:'none',fontFamily:'Nunito,sans-serif'}}/>
             <button onClick={handleNotifTimeChange}
-              style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',border:'none',
+              style={{background:`linear-gradient(90deg,${P},${P2})`,border:'none',
                 borderRadius:10,padding:'8px 14px',color:'#FFF',fontWeight:800,
                 fontSize:12,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
               Set
@@ -1686,11 +1691,31 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
           </div>
           <button onClick={()=>setDarkMode(v=>!v)}
             style={{width:48,height:26,borderRadius:13,border:'none',cursor:'pointer',
-              background:darkMode?'#6750A4':'#E4DAFB',position:'relative',transition:'background 0.2s',flexShrink:0}}>
+              background:darkMode?P:'#E4DAFB',position:'relative',transition:'background 0.2s',flexShrink:0}}>
             <div style={{width:20,height:20,borderRadius:'50%',background:'#FFF',
               position:'absolute',top:3,transition:'left 0.2s',
               left:darkMode?'25px':'3px',boxShadow:'0 1px 4px rgba(0,0,0,0.2)'}}/>
           </button>
+        </div>
+        <div style={{paddingBottom:12,borderBottom:'1px solid #E4DAFB',marginBottom:12}}>
+          <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>Color Palette</div>
+          <div style={{fontSize:11,color:'#79747E',marginBottom:10}}>Choose a multi-colored look for habits, buttons, and track graphs</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            {Object.entries(THEME_PALETTES).map(([id,t])=>(
+              <button key={id} onClick={()=>setPaletteId(id)}
+                style={{border:`2px solid ${paletteId===id?t.primary:'#E4DAFB'}`,
+                  background:paletteId===id?t.container:'#FFFFFF',borderRadius:14,padding:10,
+                  cursor:'pointer',textAlign:'left',fontFamily:'Nunito,sans-serif'}}>
+                <div style={{display:'flex',gap:4,marginBottom:7}}>
+                  {t.habitColors.slice(0,5).map((c,i)=>(
+                    <span key={i} style={{width:17,height:17,borderRadius:6,background:c.f,
+                      boxShadow:`0 1px 4px ${c.f}44`}}/>
+                  ))}
+                </div>
+                <div style={{fontSize:12,fontWeight:900,color:t.primary}}>{t.name}</div>
+              </button>
+            ))}
+          </div>
         </div>
         <div>
           <div style={{fontSize:14,fontWeight:700,color:'#1C1B1F',marginBottom:3}}>🎯 GATE Exam Date</div>
@@ -1701,7 +1726,7 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
                 fontSize:13,fontWeight:700,color:'#1C1B1F',background:'#F0EAFE',outline:'none',
                 fontFamily:'Nunito,sans-serif'}}/>
             <button onClick={()=>setGateDate(gateInput)}
-              style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',border:'none',
+              style={{background:`linear-gradient(90deg,${P},${P2})`,border:'none',
                 borderRadius:12,padding:'10px 16px',color:'#FFF',fontWeight:800,
                 fontSize:13,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
               Set
@@ -1862,80 +1887,160 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
 /* ═══════════════════════════════════════════════════
    MONTHLY VIEW
    ═══════════════════════════════════════════════════ */
-function MonthlyView({daily,logs,vy,vm,T,toggleDay}){
+function MonthlyView({daily,logs,vy,vm,T,toggleDay,chart7}){
   const dim=daysIn(vy,vm);
+  const isCurrent=T.y===vy&&T.m===vm;
+  const rel=isCurrent?T.d:dim;
+  const dayStats=useMemo(()=>Array.from({length:dim},(_,di)=>{
+    const day=di+1,k=dk(vy,vm,day);
+    const done=daily.filter((_,idx)=>(logs[k]||{})[idx]).length;
+    const fut=isCurrent&&day>T.d;
+    return{day,k,done,total:daily.length,pct:daily.length?Math.round(done/daily.length*100):0,fut};
+  }),[daily,logs,vy,vm,T.d,isCurrent,dim]);
+  const doneTotal=dayStats.slice(0,rel).reduce((a,d)=>a+d.done,0);
+  const possible=Math.max(1,daily.length*rel);
+  const monthPct=daily.length?Math.round(doneTotal/possible*100):0;
+  const bestDay=dayStats.slice(0,rel).reduce((best,d)=>d.pct>best.pct?d:best,{pct:0,day:'-'});
+  const weekStats=useMemo(()=>{
+    const out=[];
+    for(let start=1;start<=dim;start+=7){
+      const slice=dayStats.slice(start-1,Math.min(start+6,dim));
+      const active=slice.filter(d=>!d.fut);
+      const done=active.reduce((a,d)=>a+d.done,0);
+      const total=Math.max(1,active.reduce((a,d)=>a+d.total,0));
+      out.push({label:`${start}-${Math.min(start+6,dim)}`,pct:active.length?Math.round(done/total*100):0});
+    }
+    return out;
+  },[dayStats,dim]);
+  const runningPoints=chart7.map((d,i)=>`${8+i*15},${82-(d.pct*0.68)}`).join(' ');
+
   return(
-    <div>
-      <div style={{display:'flex',gap:14,fontSize:11,color:TS,
-        marginBottom:10,paddingLeft:2,flexWrap:'wrap'}}>
-        <span style={{color:'#388E3C',fontWeight:700}}>≥80% green</span>
-        <span style={{color:'#F57C00',fontWeight:700}}>50-79% orange</span>
-        <span style={{color:'#C62828',fontWeight:700}}>below 50% red</span>
+    <div data-swipe-lock="true" style={{display:'flex',flexDirection:'column',gap:12}}>
+      <div style={{background:`linear-gradient(135deg,${P},${P2})`,
+        borderRadius:22,padding:'17px',color:'#FFF',boxShadow:`0 6px 20px ${P}33`}}>
+        <div style={{fontSize:10,fontWeight:900,letterSpacing:1.2,opacity:0.75,textTransform:'uppercase'}}>Track Score</div>
+        <div style={{display:'flex',alignItems:'flex-end',gap:10,marginTop:4}}>
+          <div style={{fontSize:36,fontWeight:900,lineHeight:1}}>{monthPct}%</div>
+          <div style={{fontSize:12,fontWeight:800,opacity:0.82,marginBottom:5}}>
+            {doneTotal}/{daily.length*rel||0} checks this month
+          </div>
+        </div>
+        <div style={{height:8,background:'rgba(255,255,255,0.24)',borderRadius:5,overflow:'hidden',marginTop:12}}>
+          <div style={{height:'100%',width:`${monthPct}%`,
+            background:'linear-gradient(90deg,#FFFFFF,#B2EBF2)',borderRadius:5,transition:'width 0.5s'}}/>
+        </div>
       </div>
-      <div style={{background:SUR,borderRadius:20,overflow:'hidden',
-        border:`1px solid ${OL}`,boxShadow:'0 1px 6px rgba(103,80,164,0.08)',marginBottom:12}}>
-        <div style={{overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
-          <table style={{borderCollapse:'collapse',width:'100%',minWidth:(140+dim*22)+'px'}}>
-            <thead>
-              <tr style={{background:'#FAFAFF'}}>
-                <th style={{position:'sticky',left:0,zIndex:5,background:'#FAFAFF',
-                  borderRight:`1px solid ${OL}`,textAlign:'left',
-                  padding:'8px 10px',fontSize:10,color:TS,fontWeight:700,minWidth:130}}>HABIT</th>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:18,padding:13,
+          boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
+          <div style={{fontSize:10,fontWeight:900,color:TS,letterSpacing:1,textTransform:'uppercase'}}>Best Day</div>
+          <div style={{fontSize:26,fontWeight:900,color:'#2E7D32'}}>{bestDay.day}</div>
+          <div style={{fontSize:11,fontWeight:800,color:'#388E3C'}}>{bestDay.pct}% complete</div>
+        </div>
+        <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:18,padding:13,
+          boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
+          <div style={{fontSize:10,fontWeight:900,color:TS,letterSpacing:1,textTransform:'uppercase'}}>Days Tracked</div>
+          <div style={{fontSize:26,fontWeight:900,color:P}}>{rel}</div>
+          <div style={{fontSize:11,fontWeight:800,color:P}}>of {dim} in {MONTHS[vm]}</div>
+        </div>
+      </div>
+
+      <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:20,padding:14,
+        boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div>
+            <div style={{fontSize:12,fontWeight:900,color:P}}>7-Day Running Track</div>
+            <div style={{fontSize:10,color:TS,fontWeight:700}}>Moved from Today for cleaner focus</div>
+          </div>
+          <div style={{fontSize:18,fontWeight:900,color:chart7[6]?.pct>=80?'#2E7D32':chart7[6]?.pct>=50?'#F57C00':'#C62828'}}>
+            {chart7[6]?.pct||0}%
+          </div>
+        </div>
+        <svg viewBox="0 0 106 88" style={{width:'100%',height:120,display:'block'}}>
+          <defs>
+            <linearGradient id="trackFill" x1="0" x2="1">
+              <stop offset="0%" stopColor={P} stopOpacity="0.18"/>
+              <stop offset="100%" stopColor="#00BCD4" stopOpacity="0.2"/>
+            </linearGradient>
+          </defs>
+          <polyline points={`8,82 ${runningPoints} 98,82`} fill="url(#trackFill)" stroke="none"/>
+          <polyline points={runningPoints} fill="none" stroke={P} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+          {chart7.map((d,i)=>(
+            <g key={i}>
+              <circle cx={8+i*15} cy={82-(d.pct*0.68)} r={d.isToday?4.5:3.5} fill={d.isToday?P:'#00A7B5'} stroke="#FFF" strokeWidth="2"/>
+              <text x={8+i*15} y="87" textAnchor="middle" fontSize="7" fontWeight="800" fill={d.isToday?P:TS}>{d.day[0]}</text>
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:20,padding:14,
+        boxShadow:'0 1px 6px rgba(103,80,164,0.07)'}}>
+        <div style={{fontSize:12,fontWeight:900,color:P,marginBottom:10}}>Weekly Graph</div>
+        <div style={{display:'flex',gap:8,alignItems:'flex-end',height:108}}>
+          {weekStats.map((w,i)=>(
+            <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5,minWidth:0}}>
+              <div style={{fontSize:10,fontWeight:900,color:w.pct>=80?'#2E7D32':w.pct>=50?'#F57C00':'#C62828'}}>{w.pct}%</div>
+              <div style={{width:'100%',height:`${Math.max(8,w.pct)}%`,borderRadius:'8px 8px 3px 3px',
+                background:w.pct>=80?'linear-gradient(180deg,#66BB6A,#2E7D32)':w.pct>=50?'linear-gradient(180deg,#FFB74D,#F57C00)':`linear-gradient(180deg,${PC},${P})`,
+                boxShadow:'0 3px 9px rgba(0,0,0,0.08)'}}/>
+              <div style={{fontSize:8,color:TS,fontWeight:800,whiteSpace:'nowrap'}}>{w.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        {daily.map((h,hi)=>{
+          const col=hc(hi);
+          let dn=0;
+          for(let d=1;d<=rel;d++)if((logs[dk(vy,vm,d)]||{})[hi])dn++;
+          const mpct=rel?Math.round(dn/rel*100):0;
+          return(
+            <div key={hi} style={{background:SUR,border:`1px solid ${col.f}33`,
+              borderRadius:18,padding:12,boxShadow:`0 2px 10px ${col.f}11`}}>
+              <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:10}}>
+                <div style={{width:32,height:32,borderRadius:11,background:col.bg,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  color:col.f,fontWeight:900,fontSize:13}}>{hi+1}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:900,color:TX,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{h}</div>
+                  <div style={{fontSize:10,fontWeight:800,color:col.f}}>{dn}/{rel} days - {mpct}%</div>
+                </div>
+                <div style={{fontSize:22,fontWeight:900,color:col.f}}>{mpct}%</div>
+              </div>
+              <div style={{height:7,background:col.bg,borderRadius:4,overflow:'hidden',marginBottom:10}}>
+                <div style={{height:'100%',width:`${mpct}%`,background:col.f,borderRadius:4}}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:6}}>
                 {Array.from({length:dim},(_,di)=>{
-                  const wd=new Date(vy,vm,di+1);
-                  const isT=T.y===vy&&T.m===vm&&T.d===di+1;
+                  const day=di+1,k2=dk(vy,vm,day);
+                  const on=!!(logs[k2]||{})[hi];
+                  const fut=isCurrent&&day>T.d;
+                  const isT2=isCurrent&&T.d===day;
                   return(
-                    <th key={di} style={{padding:'5px 1px',minWidth:22,textAlign:'center',
-                      fontSize:9,fontWeight:700,background:isT?PC:'#FAFAFF',color:isT?P:TS}}>
-                      <div>{di+1}</div>
-                      <div style={{opacity:0.5}}>{WD[wd.getDay()][0]}</div>
-                    </th>
+                    <button key={di} onClick={()=>!fut&&toggleDay(hi,vy,vm,day)}
+                      disabled={fut}
+                      style={{height:32,borderRadius:9,border:`1.5px solid ${isT2?P:on?col.f:OL}`,
+                        background:on?col.f:(isT2?PC:'#FAFAFF'),
+                        color:on?'#FFF':(isT2?P:TS),fontSize:10,fontWeight:900,
+                        cursor:fut?'default':'pointer',opacity:fut?0.24:1,
+                        fontFamily:'Nunito,sans-serif',boxShadow:on?`0 2px 8px ${col.f}33`:undefined}}>
+                      {day}
+                    </button>
                   );
                 })}
-                <th style={{padding:'5px 7px',fontSize:9,color:TS,fontWeight:700,minWidth:34,textAlign:'center'}}>%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {daily.map((h,hi)=>{
-                const col=hc(hi);
-                const rel=T.y===vy&&T.m===vm?T.d:dim;
-                let dn=0;
-                for(let d=1;d<=rel;d++)if((logs[dk(vy,vm,d)]||{})[hi])dn++;
-                const mpct=Math.round(dn/rel*100);
-                return(
-                  <tr key={hi} style={{borderTop:`1px solid #F0EAFE`}}>
-                    <td style={{position:'sticky',left:0,zIndex:2,background:SUR,
-                      borderRight:`1px solid ${OL}`,padding:'6px 10px'}}>
-                      <span style={{fontSize:11,fontWeight:700,color:TX,display:'block',
-                        maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{h}</span>
-                    </td>
-                    {Array.from({length:dim},(_,di)=>{
-                      const day=di+1,k2=dk(vy,vm,day);
-                      const on=!!(logs[k2]||{})[hi];
-                      const fut=T.y===vy&&T.m===vm&&day>T.d;
-                      const isT2=T.y===vy&&T.m===vm&&T.d===day;
-                      return(
-                        <td key={di} style={{padding:'3px 1px',textAlign:'center',
-                          background:isT2?`${PC}66`:undefined}}>
-                          <button onClick={()=>!fut&&toggleDay(hi,vy,vm,day)}
-                            style={{width:15,height:15,borderRadius:4,border:'none',
-                              background:on?col.f:'#EEE8FF',cursor:fut?'default':'pointer',
-                              opacity:fut?0.18:1,display:'block',margin:'0 auto',
-                              boxShadow:on?`0 1px 4px ${col.f}55`:undefined,
-                              transition:'all 0.12s'}}/>
-                        </td>
-                      );
-                    })}
-                    <td style={{textAlign:'center',padding:'3px 7px'}}>
-                      <span style={{fontSize:11,fontWeight:800,
-                        color:mpct>=80?'#388E3C':mpct>=50?'#F57C00':'#C62828'}}>{mpct}%</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+              </div>
+            </div>
+          );
+        })}
+        {!daily.length&&(
+          <div style={{textAlign:'center',padding:'30px 20px',color:TS,
+            background:SUR,border:`1px solid ${OL}`,borderRadius:20}}>
+            <div style={{fontSize:13,fontWeight:700}}>No habits yet - add them in More.</div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2025,12 +2130,14 @@ function App(){
   const prevXpRef=useRef(xp);
   const prevBadgesRef=useRef(badges);
   const [darkMode,setDarkMode]=useState(()=>{try{return localStorage.getItem('habitra_dark')==='1';}catch(e){return false;}});
+  const [paletteId,setPaletteId]=useState(()=>{try{return localStorage.getItem('habitra_palette')||'classic';}catch(e){return 'classic';}});
   const [gateDate,setGateDate]=useState(()=>{try{return localStorage.getItem('habitra_gate_date')||'2027-02-01';}catch(e){return '2027-02-01';}});
   const [studyHours,setStudyHours]=useState(()=>{try{const r=localStorage.getItem('habitra_study_hours');return r?JSON.parse(r):{}}catch(e){return {};}});
   const [showHoursInput,setShowHoursInput]=useState(false);
   const [hoursInput,setHoursInput]=useState('');
   const prevTodayPctRef=useRef(0);
   const fileRef=useRef(null);
+  applyPalette(paletteId);
 
   const T=now2();
   const TK=dk(T.y,T.m,T.d);
@@ -2075,6 +2182,11 @@ function App(){
     try{localStorage.setItem('habitra_dark',darkMode?'1':'0');}catch(e){}
   },[darkMode]);
 
+  useEffect(()=>{
+    applyPalette(paletteId);
+    try{localStorage.setItem('habitra_palette',paletteId);}catch(e){}
+  },[paletteId]);
+
   /* PWA install prompt */
   useEffect(()=>{
     const handler=e=>{e.preventDefault();setDeferredInstallPrompt(e);setShowInstallBanner(true);};
@@ -2087,11 +2199,19 @@ function App(){
 
   /* Swipe gesture handler */
   const touchStartX=useRef(null);
-  const handleTouchStart=useCallback(e=>{touchStartX.current=e.touches[0].clientX;},[]);
+  const touchStartY=useRef(null);
+  const handleTouchStart=useCallback(e=>{
+    if(view==='monthly'||e.target.closest?.('[data-swipe-lock="true"]')){
+      touchStartX.current=null;touchStartY.current=null;return;
+    }
+    touchStartX.current=e.touches[0].clientX;
+    touchStartY.current=e.touches[0].clientY;
+  },[view]);
   const handleTouchEnd=useCallback(e=>{
     if(touchStartX.current===null)return;
     const dx=e.changedTouches[0].clientX-touchStartX.current;
-    if(Math.abs(dx)<60)return;
+    const dy=e.changedTouches[0].clientY-touchStartY.current;
+    if(Math.abs(dx)<70||Math.abs(dy)>35)return;
     const VIEWS=['today','monthly','revision','stats','settings'];
     const ci=VIEWS.indexOf(view);
     if(dx<0&&ci<VIEWS.length-1)setView(VIEWS[ci+1]);
@@ -2330,7 +2450,7 @@ function App(){
   /* NAV ITEMS */
   const NAV=[
     ['today',IC.home,'Today'],
-    ['monthly',IC.bar,'Monthly'],
+    ['monthly',IC.bar,'Track'],
     ['revision',IC.book,'Revise'],
     ['stats',IC.bell,'Stats'],
     ['achieve','🏆','Achieve'],
@@ -2343,7 +2463,7 @@ function App(){
       <div style={{minHeight:'100vh',background:BG,display:'flex',flexDirection:'column',
         alignItems:'center',justifyContent:'center',gap:16}}>
         <div style={{width:56,height:56,borderRadius:18,
-          background:'linear-gradient(135deg,#7C4DFF,#B388FF)',
+          background:`linear-gradient(135deg,${P},${P2})`,
           display:'flex',alignItems:'center',justifyContent:'center',
           boxShadow:'0 6px 20px rgba(124,77,255,0.4)'}}>
           <Ico d={IC.flame} s={28} c='#FFF' fill='none'/>
@@ -2351,7 +2471,7 @@ function App(){
         <div style={{fontSize:22,fontWeight:900,color:P,letterSpacing:-0.5}}>HABITRA</div>
         <div style={{fontSize:13,color:TS,fontWeight:600}}>Syncing your data… ☁️</div>
         <div style={{width:120,height:4,background:OL,borderRadius:2,overflow:'hidden',marginTop:4}}>
-          <div style={{width:'60%',height:'100%',background:`linear-gradient(90deg,${P},#B388FF)`,
+          <div style={{width:'60%',height:'100%',background:`linear-gradient(90deg,${P},${P2})`,
             borderRadius:2,animation:'slide 1.2s ease-in-out infinite'}}/>
         </div>
         <style>{`@keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}`}</style>
@@ -2369,7 +2489,7 @@ function App(){
 
       {/* PWA INSTALL BANNER */}
       {showInstallBanner&&!window.matchMedia('(display-mode: standalone)').matches&&(
-        <div style={{background:'linear-gradient(90deg,#6750A4,#9C68FF)',
+        <div style={{background:`linear-gradient(90deg,${P},${P2})`,
           padding:'10px 16px',display:'flex',alignItems:'center',gap:10,
           position:'sticky',top:0,zIndex:50}}>
           <span style={{fontSize:20}}>📱</span>
@@ -2402,7 +2522,7 @@ function App(){
         boxShadow:'0 2px 10px rgba(103,80,164,0.09)'}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <div style={{width:36,height:36,borderRadius:12,
-            background:'linear-gradient(135deg,#7C4DFF,#B388FF)',
+            background:`linear-gradient(135deg,${P},${P2})`,
             display:'flex',alignItems:'center',justifyContent:'center',
             boxShadow:'0 3px 10px rgba(124,77,255,0.35)'}}>
             <Ico d={IC.flame} s={18} c='#FFF' fill='none'/>
@@ -2457,9 +2577,9 @@ function App(){
         {view==='today'&&(
           <TodayView daily={daily} logs={logs} TK={TK} toggleToday={toggleToday}
             revEntries={revEntries} onRevToggle={toggleRevision}
-            chart7={chart7} todayDone={todayDone} todayPct={todayPct}
+            todayDone={todayDone} todayPct={todayPct}
             bestStr={bestStr} avg30={avg30}
-            gateCountdown={gateCountdown} gateDate={gateDate} setGateDate={setGateDate}
+            gateCountdown={gateCountdown} gateDate={gateDate}
             todayHours={todayHours} weekHours={weekHours} totalHours={totalHours}
             showHoursInput={showHoursInput} setShowHoursInput={setShowHoursInput}
             hoursInput={hoursInput} setHoursInput={setHoursInput} logHours={logHours}
@@ -2468,7 +2588,7 @@ function App(){
             xp={xp} badges={badges}/>
         )}
         {view==='monthly'&&(
-          <MonthlyView daily={daily} logs={logs} vy={vy} vm={vm} T={T} toggleDay={toggleDay}/>
+          <MonthlyView daily={daily} logs={logs} vy={vy} vm={vm} T={T} toggleDay={toggleDay} chart7={chart7}/>
         )}
         {view==='weekly'&&(
           <WeeklyView weekly={weekly} wlogs={wlogs} CWK={CWK} toggleWeekly={toggleWeekly}/>
@@ -2500,16 +2620,17 @@ function App(){
             darkMode={darkMode} setDarkMode={setDarkMode}
             gateDate={gateDate} setGateDate={setGateDate}
             notifEnabled={notifEnabled} setNotifEnabled={setNotifEnabled}
-            notifTime={notifTime} setNotifTime={setNotifTime}/>
+            notifTime={notifTime} setNotifTime={setNotifTime}
+            paletteId={paletteId} setPaletteId={setPaletteId}/>
         )}
       </div>
 
       {/* FAB */}
-      {(view==='today'||view==='weekly')&&(
-        <button onClick={()=>setAddType(view==='today'?'daily':'weekly')}
+      {view==='weekly'&&(
+        <button onClick={()=>setAddType('weekly')}
           style={{position:'fixed',bottom:82,right:16,
             width:52,height:52,borderRadius:17,
-            background:`linear-gradient(135deg,${P},#9C68FF)`,
+            background:`linear-gradient(135deg,${P},${P2})`,
             border:'none',cursor:'pointer',
             display:'flex',alignItems:'center',justifyContent:'center',
             boxShadow:'0 6px 20px rgba(103,80,164,0.42)',zIndex:20}}>
@@ -2590,7 +2711,7 @@ function App(){
           <div style={{display:'flex',gap:9,marginTop:13}}>
             <button onClick={doAdd}
               style={{flex:1,padding:'13px',
-                background:`linear-gradient(90deg,${P},#9C68FF)`,
+                background:`linear-gradient(90deg,${P},${P2})`,
                 border:'none',borderRadius:14,color:'#FFF',
                 fontWeight:900,fontSize:14,cursor:'pointer',fontFamily:'Nunito,sans-serif'}}>
               Add
