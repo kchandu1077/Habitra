@@ -1031,6 +1031,7 @@ const IC={
   chevR:'M9 18l6-6-6-6',
   search:['M11 19a8 8 0 100-16 8 8 0 000 16z','M21 21l-4.35-4.35'],
   filter:['M22 3H2l8 9.46V19l4 2v-8.54L22 3'],
+  cal:['M8 2v4','M16 2v4','M3 10h18','M21 8V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8z','M8 14h.01','M12 14h.01','M16 14h.01','M8 18h.01','M12 18h.01'],
 };
 
 /* ── GATE QUOTES ────────────────────────────────────*/
@@ -1445,7 +1446,7 @@ function RevisionView({entries,onToggle,onDelete,onAdd}){
 /* ═══════════════════════════════════════════════════
    STATS VIEW
    ═══════════════════════════════════════════════════ */
-function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
+function StatsView({daily,logs,revEntries,studyHours,classHoursLog,darkMode}){
   const [stab,setStab]=useState('habits');
   const bestStr=useMemo(()=>Math.max(0,...daily.map((_,i)=>getStreak(logs,i))),[logs,daily]);
   const avg30=useMemo(()=>daily.length?Math.round(daily.reduce((a,_,i)=>a+getRate(logs,i,30),0)/daily.length):0,[logs,daily]);
@@ -1578,33 +1579,76 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
               </div>
             );
           })()}
-          {daily.map((h,i)=>{
-            const col=hc(i);
-            const st=getStreak(logs,i),lg=getLongest(logs,i);
-            const r7=getRate(logs,i,7),r30=getRate(logs,i,30);
-            return(
-              <div key={i} style={{background:SUR,border:`1px solid ${OL}`,
-                borderRadius:20,padding:'14px',marginBottom:9,
-                boxShadow:'0 1px 4px rgba(103,80,164,0.07)'}}>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-                  <div style={{width:9,height:9,borderRadius:'50%',background:col.f}}/>
-                  <span style={{fontSize:13,fontWeight:700,color:TX,flex:1}}>{h}</span>
-                  {st>=3&&<Chip label={`🔥${st}d`} color={col.f} small/>}
+          {/* ── PER-HABIT COMPACT LIST ── */}
+          <div style={{background:SUR,border:`1px solid ${OL}`,borderRadius:18,
+            overflow:'hidden',boxShadow:'0 1px 4px rgba(103,80,164,0.06)'}}>
+            {/* Column headers */}
+            <div style={{display:'flex',alignItems:'center',gap:0,
+              padding:'7px 14px 7px 32px',
+              borderBottom:`1px solid ${OL}`,
+              background:SV}}>
+              <div style={{flex:1}}/>
+              {[['🔥','Streak'],['7D','Rate'],['30D','Rate'],['★','Best']].map(([ic,lb])=>(
+                <div key={lb} style={{width:46,textAlign:'center'}}>
+                  <div style={{fontSize:9,fontWeight:800,color:TS,letterSpacing:0.5}}>{ic}</div>
+                  <div style={{fontSize:7,color:TS,letterSpacing:0.3,textTransform:'uppercase'}}>{lb}</div>
                 </div>
-                <div style={{display:'flex',gap:6}}>
-                  {[[`${st}d`,'Streak',col.f],[`${r7}%`,'7d',P],[`${r30}%`,'30d','#0097A7'],[`${lg}d`,'Best','#C2185B']].map(([v,l,c2])=>(
-                    <div key={l} style={{flex:1,background:SV,borderRadius:12,padding:'8px 4px',textAlign:'center'}}>
-                      <div style={{fontSize:15,fontWeight:900,color:c2}}>{v}</div>
-                      <div style={{fontSize:9,color:TS,fontWeight:600,marginTop:1,textTransform:'uppercase',letterSpacing:0.5}}>{l}</div>
+              ))}
+            </div>
+            {daily.map((h,i)=>{
+              const col=hc(i);
+              const st=getStreak(logs,i),lg=getLongest(logs,i);
+              const r7=getRate(logs,i,7),r30=getRate(logs,i,30);
+              const healthColor=r30>=80?'#43A047':r30>=50?'#F57C00':'#E53935';
+              return(
+                <div key={i} style={{borderBottom:i<daily.length-1?`1px solid ${OL}`:'none'}}>
+                  {/* Main row */}
+                  <div style={{display:'flex',alignItems:'center',gap:0,padding:'9px 14px'}}>
+                    {/* Color dot */}
+                    <div style={{width:8,height:8,borderRadius:'50%',background:col.f,
+                      flexShrink:0,marginRight:8,boxShadow:`0 0 0 2px ${col.f}22`}}/>
+                    {/* Habit name */}
+                    <span style={{flex:1,fontSize:12,fontWeight:700,color:TX,
+                      overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
+                      minWidth:0,paddingRight:6}}>{h}</span>
+                    {/* Streak */}
+                    <div style={{width:46,textAlign:'center'}}>
+                      <span style={{fontSize:13,fontWeight:900,
+                        color:st>=7?'#E65100':st>=3?col.f:TS}}>
+                        {st>0?`${st}d`:'—'}
+                      </span>
                     </div>
-                  ))}
+                    {/* 7D */}
+                    <div style={{width:46,textAlign:'center'}}>
+                      <span style={{fontSize:12,fontWeight:800,
+                        color:r7>=80?'#43A047':r7>=50?'#F57C00':r7>0?'#E53935':TS}}>
+                        {r7>0?`${r7}%`:'—'}
+                      </span>
+                    </div>
+                    {/* 30D */}
+                    <div style={{width:46,textAlign:'center'}}>
+                      <span style={{fontSize:12,fontWeight:800,color:healthColor}}>
+                        {r30>0?`${r30}%`:'—'}
+                      </span>
+                    </div>
+                    {/* Best */}
+                    <div style={{width:46,textAlign:'center'}}>
+                      <span style={{fontSize:12,fontWeight:800,color:lg>=14?'#7C4DFF':lg>=7?P:TS}}>
+                        {lg>0?`${lg}d`:'—'}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Mini progress bar — 30d rate */}
+                  <div style={{height:2,background:OL,marginLeft:30,marginRight:14,
+                    borderRadius:1,overflow:'hidden',marginTop:-3,marginBottom:5}}>
+                    <div style={{height:'100%',width:`${r30}%`,
+                      background:healthColor,
+                      borderRadius:1,transition:'width 0.5s'}}/>
+                  </div>
                 </div>
-                <div style={{height:4,background:OL,borderRadius:2,marginTop:9,overflow:'hidden'}}>
-                  <div style={{height:'100%',width:`${r30}%`,background:col.f,borderRadius:2,transition:'width 0.5s'}}/>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -1722,7 +1766,7 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
           return Math.max(0,Math.min(100,sc));
         };
         const hCol=(h)=>{
-          const isDk=document.body.classList.contains('dark');
+          const isDk=darkMode;
           if(h<0)return{bg:isDk?'#1E1B2E':'#F0F0F0',text:isDk?'#5A5474':'#AAAAAA',label:'None',dot:'#666666'};
           if(h>=80)return{bg:isDk?'#0D2010':'#D6EDDA',text:isDk?'#81C784':'#2E7D32',label:'Strong',dot:'#43A047'};
           if(h>=55)return{bg:isDk?'#2A2000':'#FFF3CD',text:isDk?'#FFD54F':'#B57700',label:'OK',dot:'#F9A825'};
@@ -1919,9 +1963,9 @@ function StatsView({daily,logs,revEntries,studyHours,classHoursLog}){
                 :perfect?'Best Best! Perfect 6-hour day!'
                 :belowGoal?`${Math.round((IDEAL_STUDY_HOURS-h)*10)/10}h short — scope for improvement`
                 :'No study logged';
-              const isDkM=document.body.classList.contains('dark');
+              const isDkM=darkMode;
               const bg=exceeded?(isDkM?'#0A1A30':'#EBF5FB'):perfect?(isDkM?'#0D2010':'#E9F7EF'):belowGoal?(isDkM?'#2A1800':'#FEF9E7'):(isDkM?SV:'#FAFAFA');
-              const border=exceeded?'#AED6F1':perfect?'#A9DFBF':belowGoal?'#FAD7A0':OL;
+              const border=exceeded?(isDkM?'#1A3460':'#AED6F1'):perfect?(isDkM?'#1A4020':'#A9DFBF'):belowGoal?(isDkM?'#4A3000':'#FAD7A0'):OL;
               const statusColor=exceeded?'#1565C0':perfect?'#196F3D':belowGoal?'#CA6F1E':'#9E9E9E';
               return(
                 <div key={d.k} style={{background:bg,border:`1.5px solid ${border}`,
@@ -2174,13 +2218,20 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
   editingTaskId,setEditingTaskId,PRIORITY_CFG,
   pomodoroRunning,setPomodoroRunning,
   pomodoroSeconds,setPomodoroSeconds,pomodoroMode,setPomodoroMode,pomodoroCount,
-  absences,onClearAbsence,studyHours,classHoursLog}){
+  absences,onClearAbsence,studyHours,classHoursLog,
+  weekly,wlogs,CWK,toggleWeekly}){
   const dueEntries=useMemo(()=>getTodayDueEntries(revEntries),[revEntries]);
   const quote=useMemo(()=>todayQuote(),[]);
   const [showDueRevs,setShowDueRevs]=useState(true);
   const gateColor=gateCountdown<=30?'#FF5722':gateCountdown<=90?'#F57C00':P;
   const todayAbsence=absences?absences[TK]:null;
   const [showAbsenceQuick,setShowAbsenceQuick]=useState(false);
+  const [showHabits,setShowHabits]=useState(true);
+  const [showTasks,setShowTasks]=useState(true);
+  // Weekly targets computed
+  const wDone=weekly?weekly.filter((_,i)=>(wlogs[CWK]||{})[i]).length:0;
+  const wTotal=weekly?weekly.length:0;
+  const wPct=wTotal?Math.round(wDone/wTotal*100):0;
 
   return(
     <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -2272,6 +2323,13 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                     padding:'2px 8px',fontSize:10,fontWeight:700}}>
                     {getLevel(xp)<=2?'🌱':getLevel(xp)<=4?'📖':getLevel(xp)<=6?'🎯':'🏆'}Lv{getLevel(xp)}
                   </span>
+                  {wTotal>0&&(
+                    <span style={{background:wPct===100?'rgba(67,160,71,0.55)':'rgba(255,255,255,0.18)',
+                      borderRadius:7,padding:'2px 8px',fontSize:10,fontWeight:700,
+                      border:wPct===100?'1px solid rgba(67,160,71,0.8)':'none'}}>
+                      📋{wDone}/{wTotal} weekly
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -2463,30 +2521,44 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
           <div style={{background:SUR,borderRadius:16,border:`1px solid ${OL}`,
             boxShadow:'0 1px 6px rgba(103,80,164,0.06)',overflow:'hidden'}}>
 
-            {/* Header */}
-            <div style={{padding:'12px 16px 10px',display:'flex',alignItems:'center',gap:8,
-              borderBottom:`1px solid ${OL}`}}>
-              <span style={{fontSize:15}}>📋</span>
-              <span style={{flex:1,fontSize:13,fontWeight:800,color:TX}}>My Tasks</span>
-              {tasks.filter(t=>!t.done&&t.priority==='high').length>0&&(
-                <div style={{background:'#FFEBEE',borderRadius:20,padding:'2px 8px',
-                  fontSize:10,fontWeight:900,color:'#D32F2F',border:'1px solid #FFCDD2'}}>
-                  🔴 {tasks.filter(t=>!t.done&&t.priority==='high').length} high
+            {/* Header — collapsible */}
+            <div style={{display:'flex',alignItems:'center',
+              borderBottom:showTasks?`1px solid ${OL}`:'none'}}>
+              <button onClick={()=>setShowTasks(v=>!v)}
+                style={{flex:1,padding:'12px 16px 10px',display:'flex',alignItems:'center',gap:8,
+                  background:'none',border:'none',cursor:'pointer',fontFamily:'Nunito,sans-serif',
+                  textAlign:'left'}}>
+                <span style={{fontSize:15}}>📋</span>
+                <span style={{flex:1,fontSize:13,fontWeight:800,color:TX}}>My Tasks</span>
+                {tasks.filter(t=>!t.done&&t.priority==='high').length>0&&(
+                  <div style={{background:'#FFEBEE',borderRadius:20,padding:'2px 8px',
+                    fontSize:10,fontWeight:900,color:'#D32F2F',border:'1px solid #FFCDD2'}}>
+                    🔴 {tasks.filter(t=>!t.done&&t.priority==='high').length} high
+                  </div>
+                )}
+                {pendingTasks.length>0&&(
+                  <div style={{background:P,borderRadius:20,padding:'2px 9px',
+                    fontSize:11,fontWeight:900,color:'#FFF'}}>{pendingTasks.length}</div>
+                )}
+                <div style={{width:24,height:24,borderRadius:8,background:PC,
+                  display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+                  transition:'transform 0.2s',
+                  transform:showTasks?'rotate(0deg)':'rotate(-90deg)'}}>
+                  <Ico d={IC.down} s={12} c={P}/>
                 </div>
-              )}
-              {pendingTasks.length>0&&(
-                <div style={{background:P,borderRadius:20,padding:'2px 9px',
-                  fontSize:11,fontWeight:900,color:'#FFF'}}>{pendingTasks.length}</div>
-              )}
-              <button onClick={()=>{setShowTaskInput(v=>!v);setTaskText('');setTaskDate('');setTaskPriority('medium');setTaskNotes('');setTaskRecur('none');setTaskReminder('');}}
-                style={{background:showTaskInput?'#FFEBEE':PC,border:'none',
-                  borderRadius:10,padding:'5px 11px',cursor:'pointer',
-                  color:showTaskInput?'#D32F2F':P,fontSize:12,fontWeight:800,
-                  flexShrink:0,fontFamily:'Nunito,sans-serif'}}>
-                {showTaskInput?'Cancel':'+ Add'}
               </button>
+              {showTasks&&(
+                <button onClick={()=>{setShowTaskInput(v=>!v);setTaskText('');setTaskDate('');setTaskPriority('medium');setTaskNotes('');setTaskRecur('none');setTaskReminder('');}}
+                  style={{background:showTaskInput?'#FFEBEE':PC,border:'none',
+                    borderRadius:10,padding:'5px 11px',margin:'0 12px',cursor:'pointer',
+                    color:showTaskInput?'#D32F2F':P,fontSize:12,fontWeight:800,
+                    flexShrink:0,fontFamily:'Nunito,sans-serif'}}>
+                  {showTaskInput?'Cancel':'+ Add'}
+                </button>
+              )}
             </div>
 
+            {showTasks&&(<>
             {/* ── ADD TASK FORM ── */}
             {showTaskInput&&(
               <div style={{padding:'12px 14px 14px',background:`${P}05`,borderBottom:`1px solid ${OL}`}}>
@@ -2734,6 +2806,7 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
                 ))}
               </div>
             )}
+            </>)}
           </div>
         );
       })()}
@@ -2795,55 +2868,77 @@ function TodayView({daily,logs,TK,toggleToday,revEntries,onRevToggle,todayDone,t
         </div>
       )}
 
-      {/* ── HABITS CARD ── */}
+      {/* ── HABITS CARD (collapsible) ── */}
       <div style={{background:SUR,borderRadius:16,border:`1px solid ${OL}`,
         boxShadow:'0 1px 6px rgba(103,80,164,0.06)',overflow:'hidden'}}>
-        <div style={{padding:'12px 16px 8px',display:'flex',alignItems:'center',
-          justifyContent:'space-between',borderBottom:`1px solid ${OL}`}}>
-          <span style={{fontSize:10,fontWeight:800,color:TS,letterSpacing:1.2,textTransform:'uppercase'}}>
-            Today's Habits
-          </span>
-          <span style={{fontSize:11,fontWeight:700,color:P}}>{todayDone}/{daily.length} done</span>
-        </div>
-        {daily.length===0&&(
-          <div style={{textAlign:'center',padding:'28px 20px',color:TS}}>
-            <div style={{fontSize:32,marginBottom:6}}>🎯</div>
-            <div style={{fontSize:13,fontWeight:700}}>No habits yet — add in Settings tab</div>
+        <button onClick={()=>setShowHabits(v=>!v)}
+          style={{width:'100%',padding:'12px 16px',display:'flex',alignItems:'center',
+            justifyContent:'space-between',background:'none',border:'none',
+            borderBottom:showHabits?`1px solid ${OL}`:'none',cursor:'pointer',
+            fontFamily:'Nunito,sans-serif'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontSize:10,fontWeight:800,color:TS,letterSpacing:1.2,textTransform:'uppercase'}}>
+              Today's Habits
+            </span>
+            <span style={{fontSize:10,fontWeight:800,color:P,
+              background:PC,borderRadius:20,padding:'2px 8px'}}>
+              {todayDone}/{daily.length}
+            </span>
           </div>
-        )}
-        {daily.map((h,i)=>{
-          const done=!!(logs[TK]||{})[i];
-          const st=getStreak(logs,i);
-          const col=hc(i);
-          return(
-            <button key={i} className={`hbtn${done?' habit-done-row':''}`} onClick={()=>toggleToday(i)}
-              style={{display:'flex',alignItems:'center',gap:11,width:'100%',
-                padding:'10px 16px',
-                background:done?col.bg+'88':'transparent',
-                border:'none',borderBottom:`1px solid ${done?col.f+'22':OL}`,
-                textAlign:'left',cursor:'pointer',transition:'background 0.12s'}}>
-              <div style={{width:22,height:22,borderRadius:7,flexShrink:0,
-                background:done?col.f:OL,
-                display:'flex',alignItems:'center',justifyContent:'center',
-                transition:'all 0.15s'}}>
-                {done&&<Ico d={IC.check} s={12} c='#FFF' sw={3}/>}
-              </div>
-              <span style={{flex:1,fontSize:13,fontWeight:done?600:700,
-                color:done?col.dk:TX,
-                textDecoration:done?'line-through':'none',lineHeight:1.35}}
-                className={done?'habit-done-label':''}>
-                {h}
-              </span>
-              {st>=3&&<span style={{fontSize:10,fontWeight:800,color:col.f,
-                background:col.bg,border:`1px solid ${col.f}44`,
-                padding:'2px 7px',borderRadius:8,flexShrink:0}}>🔥{st}</span>}
-            </button>
-          );
-        })}
+          <div style={{display:'flex',alignItems:'center',gap:6}}>
+            {todayDone===daily.length&&daily.length>0&&(
+              <span style={{fontSize:10,fontWeight:800,color:'#2E7D32'}}>✓ All done!</span>
+            )}
+            <div style={{width:24,height:24,borderRadius:8,background:PC,
+              display:'flex',alignItems:'center',justifyContent:'center',transition:'transform 0.2s',
+              transform:showHabits?'rotate(0deg)':'rotate(-90deg)'}}>
+              <Ico d={IC.down} s={12} c={P}/>
+            </div>
+          </div>
+        </button>
+        {showHabits&&(<>
+          {daily.length===0&&(
+            <div style={{textAlign:'center',padding:'28px 20px',color:TS}}>
+              <div style={{fontSize:32,marginBottom:6}}>🎯</div>
+              <div style={{fontSize:13,fontWeight:700}}>No habits yet — add in Settings tab</div>
+            </div>
+          )}
+          {daily.map((h,i)=>{
+            const done=!!(logs[TK]||{})[i];
+            const st=getStreak(logs,i);
+            const col=hc(i);
+            return(
+              <button key={i} className={`hbtn${done?' habit-done-row':''}`} onClick={()=>toggleToday(i)}
+                style={{display:'flex',alignItems:'center',gap:11,width:'100%',
+                  padding:'10px 16px',
+                  background:done?col.bg+'88':'transparent',
+                  border:'none',borderBottom:`1px solid ${done?col.f+'22':OL}`,
+                  textAlign:'left',cursor:'pointer',transition:'background 0.12s'}}>
+                <div style={{width:22,height:22,borderRadius:7,flexShrink:0,
+                  background:done?col.f:OL,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  transition:'all 0.15s'}}>
+                  {done&&<Ico d={IC.check} s={12} c='#FFF' sw={3}/>}
+                </div>
+                <span style={{flex:1,fontSize:13,fontWeight:done?600:700,
+                  color:done?col.dk:TX,
+                  textDecoration:done?'line-through':'none',lineHeight:1.35}}
+                  className={done?'habit-done-label':''}>
+                  {h}
+                </span>
+                {st>=3&&<span style={{fontSize:10,fontWeight:800,color:col.f,
+                  background:col.bg,border:`1px solid ${col.f}44`,
+                  padding:'2px 7px',borderRadius:8,flexShrink:0}}>🔥{st}</span>}
+              </button>
+            );
+          })}
+        </>)}
       </div>
 
       {/* ── SMART SUGGESTIONS (collapsible) ── */}
       <SuggestionsCard suggestions={suggestions}/>
+
+
 
     </div>
   );
@@ -3622,51 +3717,192 @@ function SettingsView({daily,weekly,setDaily,setWeekly,setLogs,setRevEntries,
 }
 
 /* ═══════════════════════════════════════════════════
-   WEEKLY VIEW
+   WEEK VIEW — Weekly targets + simple weekly summary
    ═══════════════════════════════════════════════════ */
-function WeeklyView({weekly,wlogs,CWK,toggleWeekly}){
+function WeekView({weekly,wlogs,CWK,toggleWeekly,wkKey,daily,logs,setAddType,darkMode,onDeleteWeekly}){
   const wDone=weekly.filter((_,i)=>(wlogs[CWK]||{})[i]).length;
-  const wPct=weekly.length?Math.round(wDone/weekly.length*100):0;
+  const wTotal=weekly.length;
+  const wPct=wTotal?Math.round(wDone/wTotal*100):0;
+
+  // Last 4 weeks — use wkKey() so keys always match wlogs
+  const weekStats=useMemo(()=>{
+    const weeks=[];
+    for(let w=0;w<4;w++){
+      const d=new Date();d.setDate(d.getDate()-w*7);
+      const key=wkKey(d); // same function used to write wlogs
+      const wDn=weekly.filter((_,i)=>(wlogs[key]||{})[i]).length;
+      weeks.push({label:w===0?'This Week':w===1?'Last Week':`${w}w ago`,done:wDn,total:wTotal,pct:wTotal?Math.round(wDn/wTotal*100):0,key});
+    }
+    return weeks;
+  },[wlogs,weekly]);
+
+  // This week Mon-Sun dots — use midnight comparisons to avoid time drift
+  const weekDays=useMemo(()=>{
+    const days=[];
+    const now=new Date();
+    const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const dow=now.getDay()===0?6:now.getDay()-1; // Mon=0, Sun=6
+    const monday=new Date(todayMidnight);monday.setDate(todayMidnight.getDate()-dow);
+    for(let i=0;i<7;i++){
+      const d=new Date(monday);d.setDate(monday.getDate()+i);
+      const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const done=daily.filter((_,idx)=>(logs[k]||{})[idx]).length;
+      const isPast=d<todayMidnight; // strictly before today
+      const isToday=d.getTime()===todayMidnight.getTime();
+      days.push({label:['M','T','W','T','F','S','S'][i],done,total:daily.length,isPast,isToday,isFuture:d>todayMidnight,k});
+    }
+    return days;
+  },[logs,daily]);
+
   return(
-    <div>
-      <div className="weekly-summary-card" style={{background:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
-        borderRadius:24,padding:'18px',marginBottom:14,
-        border:'1px solid #A5D6A7',boxShadow:'0 4px 16px rgba(56,142,60,0.14)'}}>
-        <div style={{fontSize:11,fontWeight:700,color:'#2E7D32',marginBottom:3}}>
-          Week {CWK.split('-W')[1]} · {new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+    <div style={{display:'flex',flexDirection:'column',gap:12}}>
+
+
+
+      {/* ── TOP SUMMARY CARD ── */}
+      <div style={{background:darkMode?'linear-gradient(135deg,#0E2215,#152A1A)':'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
+        borderRadius:22,padding:'18px',
+        border:darkMode?'1px solid #1E4025':'1px solid #A5D6A7',
+        boxShadow:darkMode?'0 4px 16px rgba(0,0,0,0.35)':'0 4px 16px rgba(56,142,60,0.14)'}}>
+        <div style={{fontSize:10,fontWeight:800,color:darkMode?'#66BB6A':'#2E7D32',letterSpacing:1,
+          textTransform:'uppercase',marginBottom:4}}>
+          Week {CWK.split('-W')[1]} · {new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})}
         </div>
-        <div style={{fontSize:28,fontWeight:900,color:'#1B5E20',lineHeight:1,marginBottom:10}}>
-          {wDone}/{weekly.length}
-          <span style={{fontSize:14,fontWeight:600,color:'#388E3C',marginLeft:8}}>goals done</span>
-        </div>
-        <div style={{height:7,background:'rgba(255,255,255,0.5)',borderRadius:4,overflow:'hidden'}}>
-          <div style={{height:'100%',width:`${wPct}%`,
-            background:'linear-gradient(90deg,#43A047,#66BB6A)',
-            borderRadius:4,transition:'width 0.5s'}}/>
-        </div>
-      </div>
-      {weekly.map((h,i)=>{
-        const done=!!(wlogs[CWK]||{})[i];
-        return(
-          <button key={i} className={`hbtn${done?' weekly-done-btn':''}`} onClick={()=>toggleWeekly(i)}
-            style={{display:'flex',alignItems:'center',gap:12,width:'100%',
-              background:done?'#E8F5E9':SUR,border:`2px solid ${done?'#43A047':OL}`,
-              borderRadius:18,padding:'13px 15px',marginBottom:8,
-              textAlign:'left',cursor:'pointer',transition:'all 0.15s',
-              boxShadow:done?'0 2px 12px rgba(67,160,71,0.2)':'0 1px 4px rgba(103,80,164,0.07)'}}>
-            <div style={{width:30,height:30,borderRadius:10,flexShrink:0,
-              background:done?'#43A047':OL,
-              display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s'}}>
-              {done&&<Ico d={IC.check} s={16} c='#FFF' sw={3}/>}
+        <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:10}}>
+          <div>
+            <div style={{fontSize:36,fontWeight:900,color:darkMode?'#A5D6A7':'#1B5E20',lineHeight:1}}>{wPct}%</div>
+            <div style={{fontSize:11,color:darkMode?'#81C784':'#388E3C',fontWeight:700}}>{wDone}/{wTotal} targets done</div>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{height:8,background:darkMode?'rgba(255,255,255,0.08)':'rgba(255,255,255,0.5)',borderRadius:5,overflow:'hidden',marginBottom:6}}>
+              <div style={{height:'100%',width:`${wPct}%`,
+                background:'linear-gradient(90deg,#43A047,#66BB6A)',
+                borderRadius:5,transition:'width 0.5s'}}/>
             </div>
-            <span className={done?'weekly-done-label':''} style={{flex:1,fontSize:14,fontWeight:done?600:700,
-              color:done?'#2E7D32':TX,textDecoration:done?'line-through':'none'}}>{h}</span>
+            {wPct===100&&(
+              <div style={{fontSize:11,fontWeight:800,color:darkMode?'#A5D6A7':'#1B5E20'}}>🎉 Perfect week!</div>
+            )}
+            {wPct>0&&wPct<100&&(
+              <div style={{fontSize:11,color:darkMode?'#81C784':'#388E3C'}}>{wTotal-wDone} target{wTotal-wDone!==1?'s':''} remaining</div>
+            )}
+            {wPct===0&&wTotal>0&&(
+              <div style={{fontSize:11,color:darkMode?'#81C784':'#388E3C'}}>Start ticking off goals 💪</div>
+            )}
+          </div>
+        </div>
+
+        {/* This week daily habits — Mon-Sun dots */}
+        {daily.length>0&&(
+          <div style={{background:darkMode?'rgba(0,0,0,0.25)':'rgba(255,255,255,0.45)',borderRadius:12,padding:'10px 12px'}}>
+            <div style={{fontSize:9,fontWeight:800,color:darkMode?'#66BB6A':'#2E7D32',letterSpacing:1,
+              textTransform:'uppercase',marginBottom:7}}>Daily habits this week</div>
+            <div style={{display:'flex',gap:4,justifyContent:'space-between'}}>
+              {weekDays.map((d,i)=>{
+                const pct=d.total>0?Math.round(d.done/d.total*100):0;
+                const bg=darkMode
+                  ?(d.isFuture?'rgba(255,255,255,0.04)':d.isToday?(pct===100?'#2E7D32':pct>0?'#1B5E20':'rgba(255,255,255,0.08)'):pct===100?'#2E7D32':pct>0?'#1B5E20':'rgba(255,255,255,0.06)')
+                  :(d.isFuture?'rgba(255,255,255,0.25)':d.isToday?(pct===100?'#43A047':pct>0?'#81C784':'rgba(255,255,255,0.6)'):pct===100?'#43A047':pct>0?'#81C784':'rgba(0,0,0,0.08)');
+                const txtC=darkMode
+                  ?(d.isFuture?'rgba(100,187,106,0.2)':pct===100?'#FFF':pct>0?'#A5D6A7':'#4A4568')
+                  :(d.isFuture?'rgba(46,125,50,0.3)':pct===100?'#FFF':pct>0?'#1B5E20':'#9E9E9E');
+                return(
+                  <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                    <div style={{width:'100%',aspectRatio:'1',maxWidth:32,borderRadius:8,
+                      background:bg,display:'flex',alignItems:'center',justifyContent:'center',
+                      border:d.isToday?(darkMode?'2px solid #43A047':'2px solid #1B5E20'):'2px solid transparent',
+                      transition:'all 0.2s'}}>
+                      <span style={{fontSize:10,fontWeight:900,color:txtC}}>
+                        {d.isFuture?'·':pct===100?'✓':d.done>0?String(d.done):'—'}
+                      </span>
+                    </div>
+                    <span style={{fontSize:8,fontWeight:d.isToday?900:600,
+                      color:darkMode?(d.isToday?'#81C784':'#4A7A50'):(d.isToday?'#1B5E20':'#388E3C')}}>{d.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── WEEKLY TARGETS LIST ── */}
+      <div style={{background:SUR,borderRadius:20,border:`1px solid ${OL}`,overflow:'hidden',
+        boxShadow:'0 1px 6px rgba(103,80,164,0.06)'}}>
+        <div style={{padding:'12px 16px 10px',display:'flex',alignItems:'center',
+          justifyContent:'space-between',borderBottom:`1px solid ${OL}`}}>
+          <span style={{fontSize:13,fontWeight:900,color:TX}}>📋 This Week's Targets</span>
+          <button onClick={()=>setAddType('weekly')}
+            style={{background:PC,border:'none',borderRadius:10,padding:'5px 12px',
+              cursor:'pointer',color:P,fontSize:12,fontWeight:800,fontFamily:'Nunito,sans-serif'}}>
+            + Add
           </button>
-        );
-      })}
-      {!weekly.length&&(
-        <div style={{textAlign:'center',padding:'30px 20px',color:TS}}>
-          <div style={{fontSize:13,fontWeight:600}}>No weekly goals yet. Tap + to add!</div>
+        </div>
+
+        {wTotal===0&&(
+          <div style={{textAlign:'center',padding:'28px 20px',color:TS}}>
+            <div style={{fontSize:28,marginBottom:6}}>📋</div>
+            <div style={{fontSize:13,fontWeight:700}}>No weekly targets yet</div>
+            <div style={{fontSize:11,marginTop:4}}>Tap + Add to set goals for this week</div>
+          </div>
+        )}
+
+        {weekly.map((h,i)=>{
+          const done=!!(wlogs[CWK]||{})[i];
+          const col=hc(i);
+          return(
+            <button key={i} onClick={()=>toggleWeekly(i)}
+              style={{display:'flex',alignItems:'center',gap:12,width:'100%',
+                padding:'13px 16px',
+                background:done?col.bg+'55':'transparent',
+                border:'none',borderBottom:`1px solid ${done?col.f+'22':OL}`,
+                textAlign:'left',cursor:'pointer',transition:'background 0.15s',
+                fontFamily:'Nunito,sans-serif'}}>
+              <div style={{width:28,height:28,borderRadius:9,flexShrink:0,
+                background:done?col.f:'transparent',
+                border:`2.5px solid ${done?col.f:OL}`,
+                display:'flex',alignItems:'center',justifyContent:'center',
+                transition:'all 0.2s',boxShadow:done?`0 2px 10px ${col.f}44`:'none'}}>
+                {done&&<Ico d={IC.check} s={14} c='#FFF' sw={3}/>}
+              </div>
+              <span style={{flex:1,fontSize:14,fontWeight:done?600:700,
+                color:done?col.dk:TX,
+                textDecoration:done?'line-through':'none',opacity:done?0.7:1}}>
+                {h}
+              </span>
+              <span style={{fontSize:10,fontWeight:800,flexShrink:0,
+                color:done?col.f:TS,
+                background:done?col.bg:SV,
+                border:`1px solid ${done?col.f+'44':OL}`,
+                padding:'2px 8px',borderRadius:8}}>
+                {done?'✓ Done':'Pending'}
+              </span>
+            </button>
+          );
+        })}
+
+      </div>
+
+      {/* ── LAST 4 WEEKS ── */}
+      {wTotal>0&&(
+        <div style={{background:SUR,borderRadius:18,border:`1px solid ${OL}`,
+          padding:'12px 14px',boxShadow:'0 1px 4px rgba(103,80,164,0.05)'}}>
+          <div style={{fontSize:10,fontWeight:800,color:TS,letterSpacing:1,
+            textTransform:'uppercase',marginBottom:10}}>📈 Last 4 Weeks</div>
+          <div style={{display:'flex',flexDirection:'column',gap:7}}>
+            {weekStats.map((w,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:10}}>
+                <span style={{fontSize:10,fontWeight:700,color:i===0?P:TS,minWidth:62}}>{w.label}</span>
+                <div style={{flex:1,height:6,background:OL,borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:'100%',width:`${w.pct}%`,
+                    background:i===0?`linear-gradient(90deg,${P},${P2})`:'linear-gradient(90deg,#81C784,#43A047)',
+                    borderRadius:3,transition:'width 0.4s'}}/>
+                </div>
+                <span style={{fontSize:10,fontWeight:800,color:i===0?P:TS,minWidth:36,textAlign:'right'}}>
+                  {w.done}/{w.total}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -3749,6 +3985,7 @@ function App(){
 
   /* Auto-save whenever data changes */
   const isFirstRender=useRef(true);
+  const isFirstXpRender=useRef(true);
   useEffect(()=>{
     if(isFirstRender.current){isFirstRender.current=false;return;}
     const data={daily,weekly,logs,wlogs,revEntries};
@@ -3842,7 +4079,7 @@ function App(){
     const dx=e.changedTouches[0].clientX-touchStartX.current;
     const dy=e.changedTouches[0].clientY-touchStartY.current;
     if(Math.abs(dx)<70||Math.abs(dy)>35)return;
-    const VIEWS=['today','revision','stats','achieve','settings'];
+    const VIEWS=['today','week','revision','stats','achieve','settings'];
     const ci=VIEWS.indexOf(view);
     if(dx<0&&ci<VIEWS.length-1)setView(VIEWS[ci+1]);
     else if(dx>0&&ci>0)setView(VIEWS[ci-1]);
@@ -3851,7 +4088,7 @@ function App(){
 
   /* XP tracking — award XP on habit/revision changes */
   useEffect(()=>{
-    if(isFirstRender.current)return;
+    if(isFirstXpRender.current){isFirstXpRender.current=false;return;}
     let gained=0;
     // Count all completed habits across all days
     let totalHabitChecks=0;
@@ -4102,6 +4339,7 @@ function App(){
   /* NAV ITEMS */
   const NAV=[
     ['today',IC.home,'Today'],
+    ['week',IC.cal,'Week'],
     ['revision',IC.book,'Revise'],
     ['stats',IC.bar,'Stats'],
     ['achieve','🏆','Achieve'],
@@ -4164,8 +4402,8 @@ function App(){
       <div style={{marginTop:'auto',paddingTop:20,borderTop:`1px solid ${darkMode?'#3D3257':OL}`,marginTop:16}}>
         <div style={{borderRadius:12,padding:'8px 14px',fontSize:11,fontWeight:700,
           display:'flex',alignItems:'center',gap:6,
-          background:syncStatus==='synced'?'#E8F5E9':syncStatus==='saving'?'#FFF3E0':'#FFEBEE',
-          color:syncStatus==='synced'?'#2E7D32':syncStatus==='saving'?'#E65100':'#B71C1C'}}>
+          background:syncStatus==='synced'?(darkMode?'#0E2215':'#E8F5E9'):syncStatus==='saving'?(darkMode?'#2A1800':'#FFF3E0'):(darkMode?'#2A1010':'#FFEBEE'),
+          color:syncStatus==='synced'?(darkMode?'#81C784':'#2E7D32'):syncStatus==='saving'?(darkMode?'#FFB74D':'#E65100'):(darkMode?'#FF8A80':'#B71C1C')}}>
           <span>{syncStatus==='synced'?'☁️':syncStatus==='saving'?'⏳':'📴'}</span>
           <span>{syncStatus==='synced'?'Synced':syncStatus==='saving'?'Saving…':'Offline'}</span>
         </div>
@@ -4317,9 +4555,15 @@ function App(){
               {todayDone}/{daily.length}
             </div>
           )}
+          {view==='week'&&weekly.length>0&&(
+            <div style={{background:darkMode?'#0E2215':'#E8F5E9',borderRadius:20,padding:'5px 11px',
+              fontSize:11,fontWeight:800,color:darkMode?'#81C784':'#2E7D32',border:darkMode?'1px solid #1E4025':'1px solid #A5D6A7'}}>
+              {weekly.filter((_,i)=>(wlogs[CWK]||{})[i]).length}/{weekly.length} 📋
+            </div>
+          )}
           {dueRevCount>0&&view==='today'&&(
-            <div style={{background:'#FFF3E0',borderRadius:20,padding:'5px 11px',
-              fontSize:11,fontWeight:800,color:'#E65100',border:'1px solid #FFB74D'}}>
+            <div style={{background:darkMode?'#2A1800':'#FFF3E0',borderRadius:20,padding:'5px 11px',
+              fontSize:11,fontWeight:800,color:darkMode?'#FFB74D':'#E65100',border:darkMode?'1px solid #5A3800':'1px solid #FFB74D'}}>
               🔁 {dueRevCount}
             </div>
           )}
@@ -4327,9 +4571,9 @@ function App(){
           <div style={{
               borderRadius:20,padding:'5px 11px',fontSize:11,fontWeight:800,
               display:'flex',alignItems:'center',gap:5,
-              background:syncStatus==='synced'?'#E8F5E9':syncStatus==='saving'?'#FFF3E0':syncStatus==='loading'?'#EDE7FF':'#FFEBEE',
-              color:syncStatus==='synced'?'#2E7D32':syncStatus==='saving'?'#E65100':syncStatus==='loading'?P:'#B71C1C',
-              border:`1px solid ${syncStatus==='synced'?'#A5D6A7':syncStatus==='saving'?'#FFB74D':syncStatus==='loading'?OL:'#FFCDD2'}`}}>
+              background:syncStatus==='synced'?(darkMode?'#0E2215':'#E8F5E9'):syncStatus==='saving'?(darkMode?'#2A1800':'#FFF3E0'):syncStatus==='loading'?(darkMode?'#1E1835':'#EDE7FF'):(darkMode?'#2A1010':'#FFEBEE'),
+              color:syncStatus==='synced'?(darkMode?'#81C784':'#2E7D32'):syncStatus==='saving'?(darkMode?'#FFB74D':'#E65100'):syncStatus==='loading'?P:(darkMode?'#FF8A80':'#B71C1C'),
+              border:`1px solid ${syncStatus==='synced'?(darkMode?'#1E4025':'#A5D6A7'):syncStatus==='saving'?(darkMode?'#5A3800':'#FFB74D'):syncStatus==='loading'?OL:(darkMode?'#4A2020':'#FFCDD2')}`}}>
             <span>{syncStatus==='synced'?'☁️ Synced':syncStatus==='saving'?'⏳ Saving…':syncStatus==='loading'?'⏳ Loading…':'📴 Offline'}</span>
           </div>
         </div>
@@ -4383,10 +4627,13 @@ function App(){
                 try{localStorage.setItem('habitra_absences',JSON.stringify(next));}catch(e){}
               }}
               studyHours={studyHours}
-              classHoursLog={classHoursLog}/>
+              classHoursLog={classHoursLog}
+              weekly={weekly} wlogs={wlogs} CWK={CWK} toggleWeekly={toggleWeekly}/>
           )}
-          {view==='weekly'&&(
-            <WeeklyView weekly={weekly} wlogs={wlogs} CWK={CWK} toggleWeekly={toggleWeekly}/>
+          {view==='week'&&(
+            <WeekView weekly={weekly} wlogs={wlogs} CWK={CWK} toggleWeekly={toggleWeekly}
+              wkKey={wkKey} daily={daily} logs={logs} setAddType={setAddType} darkMode={darkMode}
+              onDeleteWeekly={i=>{setWeekly(p=>p.filter((_,j)=>j!==i));}}/>
           )}
           {view==='revision'&&(
             <RevisionView entries={revEntries} onToggle={toggleRevision}
@@ -4394,7 +4641,7 @@ function App(){
           )}
           {view==='stats'&&(
             <StatsView daily={daily} logs={logs} revEntries={revEntries}
-              studyHours={studyHours} classHoursLog={classHoursLog}/>
+              studyHours={studyHours} classHoursLog={classHoursLog} darkMode={darkMode}/>
           )}
           {view==='achieve'&&(
             <GamificationView xp={xp} badges={badges}
@@ -4428,8 +4675,8 @@ function App(){
         </div>
       </div>
 
-      {/* FAB — Weekly */}
-      {view==='weekly'&&(
+      {/* FAB — Week */}
+      {view==='week'&&(
         <button className="fab-btn" onClick={()=>setAddType('weekly')}
           style={{position:'fixed',bottom:82,right:16,
             width:52,height:52,borderRadius:17,
@@ -4488,6 +4735,15 @@ function App(){
                 <span style={{fontSize:7,fontWeight:900,color:'#FFF'}}>Lv{getLevel(xp)}</span>
               </div>
             )}
+            {id==='week'&&weekly.length>0&&(()=>{
+              const wd=weekly.filter((_,i)=>(wlogs[CWK]||{})[i]).length;
+              return wd>0?(
+                <div style={{position:'absolute',top:4,right:'8%',
+                  background:'#43A047',borderRadius:8,padding:'1px 5px'}}>
+                  <span style={{fontSize:7,fontWeight:900,color:'#FFF'}}>{wd}/{weekly.length}</span>
+                </div>
+              ):null;
+            })()}
           </button>
         ))}
       </nav>
